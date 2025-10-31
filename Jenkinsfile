@@ -35,11 +35,12 @@ pipeline {
         choice(
             name: 'REGION',
             choices: [
-                'us-east-1',
-                'us-west-1',
-                'us-west-2',
-                'eu-west-1',
-                'ap-south-1'
+                'US',
+                'UK',
+                'FR',
+                'IT',
+                'MX',
+                'IE'
             ],
             description: '🌍 Select AWS region'
         )
@@ -47,15 +48,29 @@ pipeline {
         choice(
             name: 'RETAILER',
             choices: [
-                'walmart',
-                'amazon',
-                'target',
-                'kroger',
-                'instacart',
-                'chewy',
-                'costco',
+                'ubereats',
+                'bestbuy',
                 'samsclub',
-                'other'
+                'amazon',
+                'hyvee',
+                'overstock',
+                'albertsons',
+                'cvs',
+                'gopuff',
+                'ahold',
+                'instacart',
+                'walgreen',
+                'meijer',
+                'shipt',
+                'target',
+                'wayfair',
+                'fresh',
+                'costco',
+                'kroger',
+                'shoprite',
+                'omni',
+                'chewy',
+                'walmart'
             ],
             description: '🏪 Select retailer'
         )
@@ -63,33 +78,20 @@ pipeline {
         choice(
             name: 'RETAILER_VARIANT',
             choices: [
-                'walmart-us',
-                'walmart-ca',
-                'walmart-mx',
-                'amazon-us',
-                'amazon-uk',
-                'amazon-de',
-                'amazon-jp',
-                'amazon-vendor-central',
-                'amazon-seller-central',
-                'target-us',
-                'target-online',
-                'target-store',
-                'kroger-us',
-                'kroger-delivery',
-                'kroger-pickup',
-                'instacart-us',
-                'instacart-ca',
-                'chewy-us',
-                'chewy-pharmacy',
-                'costco-us',
-                'costco-ca',
-                'costco-warehouse',
-                'costco-online',
-                'samsclub-us',
-                'samsclub-plus',
-                'samsclub-business',
-                'custom-variant'
+                'retail',
+                'hybrid',
+                'native',
+                'rms',
+                '3P',
+                'kevel',
+                'citrus',
+                'api',
+                'business',
+                'fresh',
+                'retailer',
+                'direct',
+                'promoteiq',
+                'criteo'
             ],
             description: '🔖 Select retailer variant'
         )
@@ -103,13 +105,11 @@ pipeline {
         choice(
             name: 'ENABLE_DISABLE_ENTITY',
             choices: [
-                'all',
-                'data-ingestion',
-                'reporting',
-                'analytics',
-                'alerts',
-                'integrations',
-                'api-access'
+                'FEATURE',
+                'INSTANCE',
+                'REGION',
+                'RETAILER',
+                'CLIENT'
             ],
             description: '🔧 Entity to enable/disable'
         )
