@@ -98,6 +98,18 @@ pipeline {
         )
         
         choice(
+            name: 'PRODUCT_LINE',
+            choices: ['', 'RMM', 'ESM'],
+            description: '📦 Select the product line (or leave blank for none)'
+        )
+        
+        string(
+            name: 'FEATURES',
+            defaultValue: '',
+            description: '✨ Features to enable (comma-separated list, e.g., rmm_base,optimization)'
+        )
+        
+        choice(
             name: 'ACTIVATE',
             choices: ['', 'true', 'false'],
             description: '⚡ Activate or deactivate the instance (or leave blank for none)'
@@ -146,6 +158,8 @@ pipeline {
 ║  Region           : ${params.REGION ?: 'N/A'}                          ║
 ║  Retailer         : ${params.RETAILER ?: 'N/A'}                        ║
 ║  Retailer Variant : ${params.RETAILER_VARIANT ?: 'N/A'}               ║
+║  Product Line     : ${params.PRODUCT_LINE ?: 'N/A'}                  ║
+║  Features         : ${params.FEATURES ?: 'N/A'}                      ║
 ║  Activate         : ${params.ACTIVATE ?: 'N/A'}                        ║
 ║  Entity           : ${params.ENABLE_DISABLE_ENTITY ?: 'N/A'}           ║
 ║  Dry Run          : ${params.DRY_RUN}                         ║
@@ -343,6 +357,12 @@ def buildPayload() {
     }
     if (params.RETAILER_VARIANT) {
         payload.retailerVariant = params.RETAILER_VARIANT
+    }
+    if (params.PRODUCT_LINE) {
+        payload.productLine = params.PRODUCT_LINE
+    }
+    if (params.FEATURES) {
+        payload.features = params.FEATURES.split(',').collect { it.trim() }
     }
     if (params.ACTIVATE) {
         payload.activate = params.ACTIVATE.toBoolean()
