@@ -9,6 +9,23 @@ pipeline {
     agent any
     
     parameters {
+        string(
+            name: 'JOB_INSTRUCTIONS',
+            defaultValue: '',
+            description: '''<hr><b>HOW TO USE THIS JOB:</b><br><br>
+
+<b>onboardInstance:</b><br>
+  - Onboard a new retailer or account.<br>
+  - Enable a new feature for an existing instance.<br>
+  - Blacklist a feature for an existing instance.<br><br>
+
+<b>activateInstance:</b><br>
+  - Activate a previously onboarded instance.<br>
+  - De-onboard a retailer.<br>
+  - Enable a new region for an existing instance.<br>
+  - Whitelabel a blacklisted feature.<br><hr>'''
+        )
+
         password(
             name: 'X_API_KEY',
             defaultValue: '',
@@ -21,7 +38,7 @@ pipeline {
                 'onboardInstance',
                 'activateInstance'
             ],
-            description: '''🎯 Select the operation to perform.\n\n---\n\n**HOW TO USE THIS JOB:**\n\n**onboardInstance:**\n  - Onboard a new retailer or account.\n  - Enable a new feature for an existing instance.\n  - Blacklist a feature for an existing instance.\n\n**activateInstance:**\n  - Activate a previously onboarded instance.\n  - De-onboard a retailer.\n  - Enable a new region for an existing instance.\n  - Whitelabel a blacklisted feature.\n'''
+            description: '🎯 Select the operation to perform'
         )
         
         string(
