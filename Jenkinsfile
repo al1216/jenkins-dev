@@ -350,44 +350,41 @@ def executeAPICall() {
     def apiKeyString = params.X_API_KEY.toString()
 
     while (retryCount < maxRetries) {
-        try {
-            if (retryCount > 0) {
-                echo "🔄 Retry attempt ${retryCount} of ${maxRetries}"
-                sleep(time: retryCount * 5, unit: 'SECONDS')
-            }
-            
-            def response = httpRequest(
-                url: env.API_ENDPOINT,
-                httpMode: 'POST',
-                contentType: 'APPLICATION_JSON',
-                requestBody: env.API_PAYLOAD,
-                customHeaders: [
-                    [name: 'X-API-Key', value: apiKeyString],
-                    [name: 'Content-Type', value: 'application/json']
-                ],
-                timeout: env.TIMEOUT_SECONDS.toInteger(),
-                validResponseCodes: '200:299',
-                ignoreSslErrors: true
-            )
-            
-            env.API_RESPONSE = response.content
-            env.API_STATUS = response.status
-            
+        if (retryCount > 0) {
+            echo "🔄 Retry attempt ${retryCount} of ${maxRetries}"
+            sleep(time: retryCount * 5, unit: 'SECONDS')
+        }
+
+        // Use propagate: false to handle the response manually
+        def response = httpRequest(
+            url: env.API_ENDPOINT,
+            httpMode: 'POST',
+            contentType: 'APPLICATION_JSON',
+            requestBody: env.API_PAYLOAD,
+            customHeaders: [
+                [name: 'X-API-Key', value: apiKeyString],
+                [name: 'Content-Type', value: 'application/json']
+            ],
+            timeout: env.TIMEOUT_SECONDS.toInteger(),
+            propagate: false, // Do not fail on non-2xx responses
+            ignoreSslErrors: true
+        )
+
+        env.API_RESPONSE = response.content
+        env.API_STATUS = response.status
+
+        if (response.status >= 200 && response.status < 300) {
             echo "✅ Response Status: ${env.API_STATUS}"
-            
             return // Success, exit retry loop
-            
-        } catch (Exception e) {
-            lastError = e
+        } else {
+            lastError = "Status code: ${response.status}, Response: ${response.content}"
             retryCount++
-            
-            echo "❌ API call failed: ${e.message}"
-            
-            if (retryCount >= maxRetries) {
-                error("❌ All ${maxRetries} attempts failed. Last error: ${e.message}")
-            }
+            echo "❌ API call failed. ${lastError}"
         }
     }
+    
+    // If all retries fail, stop the build
+    error("❌ All ${maxRetries} attempts failed. Last error: ${lastError}")
 }
 
 def displayResults() {
