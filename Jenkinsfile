@@ -21,7 +21,7 @@ pipeline {
                 'onboardInstance',
                 'activateInstance'
             ],
-            description: '🎯 Select the operation to perform'
+            description: '''🎯 Select the operation to perform.\n\n---\n\n**HOW TO USE THIS JOB:**\n\n**onboardInstance:**\n  - Onboard a new retailer or account.\n  - Enable a new feature for an existing instance.\n  - Blacklist a feature for an existing instance.\n\n**activateInstance:**\n  - Activate a previously onboarded instance.\n  - De-onboard a retailer.\n  - Enable a new region for an existing instance.\n  - Whitelabel a blacklisted feature.\n'''
         )
         
         string(
@@ -106,7 +106,7 @@ pipeline {
         string(
             name: 'FEATURES',
             defaultValue: '',
-            description: '✨ Features to enable (comma-separated list, e.g., rmm_base,optimization)'
+            description: '✨ Features to enable (comma-separated list, e.g., rmm_base,rmm_dsp)'
         )
         
         choice(
