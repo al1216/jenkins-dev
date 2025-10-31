@@ -122,7 +122,7 @@ pipeline {
     }
     
     environment {
-        API_BASE_URL = 'http://client-setup-platform.prod-dbx.commerceiq.ai'
+        API_BASE_URL = 'http://client-setup-platform.beta-dbx.commerceiq.ai'
         TIMEOUT_SECONDS = '30'
         RETRY_COUNT = '3'
     }
@@ -330,6 +330,7 @@ def buildPayload() {
         retailerVariant: params.RETAILER_VARIANT,
         activate: params.ACTIVATE.toBoolean(),
         enableDisableEntity: params.ENABLE_DISABLE_ENTITY,
+        user: "ops@commerceiq.ai",
         metadata: [
             executedBy: env.BUILD_USER ?: 'System',
             buildNumber: env.BUILD_NUMBER,
