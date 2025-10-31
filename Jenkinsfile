@@ -5,8 +5,6 @@
  * This pipeline enables non-technical users to execute API operations via UI
  */
 
-@Library('shared-pipeline-library') _
-
 pipeline {
     agent any
     
