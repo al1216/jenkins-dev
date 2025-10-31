@@ -138,7 +138,7 @@ pipeline {
 ║                                                               ║
 ║  📋 Operation Details:                                        ║
 ║  ──────────────────────────────────────────────────────────  ║
-║  API Key Provided  : ${params.X_API_KEY ? '✓ Yes (hidden)' : '✗ No'} ║
+║  API Key Provided  : ${params.X_API_KEY.toString() ? '✓ Yes (hidden)' : '✗ No'} ║
 ║  Operation Type    : ${params.OPERATION}                      ║
 ║  Instance Name     : ${params.INSTANCE_NAME}                  ║
 ║  Region           : ${params.REGION}                          ║
@@ -277,16 +277,17 @@ ${prettyPrintJson(env.API_PAYLOAD)}
 
 def validateInputs() {
     // Validate X-API-Key
-    if (!params.X_API_KEY || params.X_API_KEY.toString().trim().isEmpty()) {
+    def apiKey = params.X_API_KEY.toString()
+    if (apiKey.trim().isEmpty()) {
         error("❌ X-API-Key is required! Please provide your API key. Contact DevOps if you don't have one.")
     }
-
-    if (params.X_API_KEY.toString().length() < 10) {
+    
+    if (apiKey.length() < 10) {
         error("❌ X-API-Key appears to be invalid (too short). Please check your API key.")
     }
     
     // Validate instance name
-    if (!params.INSTANCE_NAME || params.INSTANCE_NAME.toString().trim().isEmpty()) {
+    if (!params.INSTANCE_NAME || params.INSTANCE_NAME.trim().isEmpty()) {
         error("❌ Instance name is required!")
     }
     
@@ -294,7 +295,7 @@ def validateInputs() {
         error("❌ Instance name can only contain alphanumeric characters, hyphens, and underscores")
     }
     
-    if (params.INSTANCE_NAME.toString().length() < 3 || params.INSTANCE_NAME.toString().length() > 50) {
+    if (params.INSTANCE_NAME.length() < 3 || params.INSTANCE_NAME.length() > 50) {
         error("❌ Instance name must be between 3 and 50 characters")
     }
     
