@@ -346,6 +346,9 @@ def executeAPICall() {
     def retryCount = 0
     def lastError = null
     
+    // Convert the secret to a string to avoid issues with the httpRequest plugin
+    def apiKeyString = params.X_API_KEY.toString()
+
     while (retryCount < maxRetries) {
         try {
             if (retryCount > 0) {
@@ -359,7 +362,7 @@ def executeAPICall() {
                 contentType: 'APPLICATION_JSON',
                 requestBody: env.API_PAYLOAD,
                 customHeaders: [
-                    [name: 'X-API-Key', value: params.X_API_KEY],
+                    [name: 'X-API-Key', value: apiKeyString],
                     [name: 'Content-Type', value: 'application/json']
                 ],
                 timeout: env.TIMEOUT_SECONDS.toInteger(),
