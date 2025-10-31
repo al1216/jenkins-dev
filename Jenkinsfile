@@ -19,9 +19,7 @@ pipeline {
             name: 'OPERATION',
             choices: [
                 'onboardInstance',
-                'activateInstance',
-                'deactivateInstance',
-                'updateInstance'
+                'activateInstance'
             ],
             description: '🎯 Select the operation to perform'
         )
@@ -35,6 +33,7 @@ pipeline {
         choice(
             name: 'REGION',
             choices: [
+                '',
                 'FR',
                 'IE',
                 'IT',
@@ -42,12 +41,13 @@ pipeline {
                 'UK',
                 'US'
             ],
-            description: '🌍 Select AWS region'
+            description: '🌍 Select AWS region (or leave blank for none)'
         )
         
         choice(
             name: 'RETAILER',
             choices: [
+                '',
                 'ahold',
                 'albertsons',
                 'amazon',
@@ -72,12 +72,13 @@ pipeline {
                 'walmart',
                 'wayfair'
             ],
-            description: '🏪 Select retailer'
+            description: '🏪 Select retailer (or leave blank for none)'
         )
         
         choice(
             name: 'RETAILER_VARIANT',
             choices: [
+                '',
                 '3P',
                 'api',
                 'business',
@@ -93,25 +94,26 @@ pipeline {
                 'retailer',
                 'rms'
             ],
-            description: '🔖 Select retailer variant'
+            description: '🔖 Select retailer variant (or leave blank for none)'
         )
         
         choice(
             name: 'ACTIVATE',
-            choices: ['true', 'false'],
-            description: '⚡ Activate or deactivate the instance'
+            choices: ['', 'true', 'false'],
+            description: '⚡ Activate or deactivate the instance (or leave blank for none)'
         )
         
         choice(
             name: 'ENABLE_DISABLE_ENTITY',
             choices: [
+                '',
                 'CLIENT',
                 'FEATURE',
                 'INSTANCE',
                 'REGION',
                 'RETAILER'
             ],
-            description: '🔧 Entity to enable/disable'
+            description: '🔧 Entity to enable/disable (or leave blank for none)'
         )
         
         booleanParam(
@@ -141,11 +143,11 @@ pipeline {
 ║  API Key Provided  : ${params.X_API_KEY.toString() ? '✓ Yes (hidden)' : '✗ No'} ║
 ║  Operation Type    : ${params.OPERATION}                      ║
 ║  Instance Name     : ${params.INSTANCE_NAME}                  ║
-║  Region           : ${params.REGION}                          ║
-║  Retailer         : ${params.RETAILER}                        ║
-║  Retailer Variant : ${params.RETAILER_VARIANT}               ║
-║  Activate         : ${params.ACTIVATE}                        ║
-║  Entity           : ${params.ENABLE_DISABLE_ENTITY}           ║
+║  Region           : ${params.REGION ?: 'N/A'}                          ║
+║  Retailer         : ${params.RETAILER ?: 'N/A'}                        ║
+║  Retailer Variant : ${params.RETAILER_VARIANT ?: 'N/A'}               ║
+║  Activate         : ${params.ACTIVATE ?: 'N/A'}                        ║
+║  Entity           : ${params.ENABLE_DISABLE_ENTITY ?: 'N/A'}           ║
 ║  Dry Run          : ${params.DRY_RUN}                         ║
 ║                                                               ║
 ║  Executed by      : ${env.BUILD_USER ?: 'System'}            ║
@@ -299,19 +301,19 @@ def validateInputs() {
         error("❌ Instance name must be between 3 and 50 characters")
     }
     
-    // Validate retailer variant matches retailer
-    def retailerPrefix = params.RETAILER_VARIANT.split('-')[0]
-    if (retailerPrefix != params.RETAILER && params.RETAILER_VARIANT != 'custom-variant') {
-        echo "⚠️  Warning: Retailer variant '${params.RETAILER_VARIANT}' may not match retailer '${params.RETAILER}'"
+    // Validate retailer variant matches retailer only if both are provided
+    if (params.RETAILER_VARIANT && params.RETAILER) {
+        def retailerPrefix = params.RETAILER_VARIANT.split('-')[0]
+        if (retailerPrefix != params.RETAILER && params.RETAILER_VARIANT != 'custom-variant') {
+            echo "⚠️  Warning: Retailer variant '${params.RETAILER_VARIANT}' may not match retailer '${params.RETAILER}'"
+        }
     }
 }
 
 def buildEndpoint(operation) {
     def endpoints = [
         'onboardInstance': '/common-auth/api/v1/instance/onboard',
-        'activateInstance': '/common-auth/api/v1/instance/activate',
-        'deactivateInstance': '/common-auth/api/v1/instance/deactivate',
-        'updateInstance': '/common-auth/api/v1/instance/update'
+        'activateInstance': '/common-auth/api/v1/instance/activate'
     ]
     
     def path = endpoints[operation]
@@ -325,11 +327,6 @@ def buildEndpoint(operation) {
 def buildPayload() {
     def payload = [
         instanceName: params.INSTANCE_NAME,
-        region: params.REGION,
-        retailer: params.RETAILER,
-        retailerVariant: params.RETAILER_VARIANT,
-        activate: params.ACTIVATE.toBoolean(),
-        enableDisableEntity: params.ENABLE_DISABLE_ENTITY,
         user: "ops@commerceiq.ai",
         metadata: [
             executedBy: env.BUILD_USER ?: 'System',
@@ -337,6 +334,22 @@ def buildPayload() {
             timestamp: new Date().format("yyyy-MM-dd'T'HH:mm:ss'Z'")
         ]
     ]
+
+    if (params.REGION) {
+        payload.region = params.REGION
+    }
+    if (params.RETAILER) {
+        payload.retailer = params.RETAILER
+    }
+    if (params.RETAILER_VARIANT) {
+        payload.retailerVariant = params.RETAILER_VARIANT
+    }
+    if (params.ACTIVATE) {
+        payload.activate = params.ACTIVATE.toBoolean()
+    }
+    if (params.ENABLE_DISABLE_ENTITY) {
+        payload.enableDisableEntity = params.ENABLE_DISABLE_ENTITY
+    }
     
     return groovy.json.JsonOutput.toJson(payload)
 }
