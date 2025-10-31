@@ -350,44 +350,39 @@ def executeAPICall() {
     def apiKeyString = params.X_API_KEY.toString()
 
     while (retryCount < maxRetries) {
-        try {
-            if (retryCount > 0) {
-                echo "🔄 Retry attempt ${retryCount} of ${maxRetries}"
-                sleep(time: retryCount * 5, unit: 'SECONDS')
-            }
-            
-            // Use failOnError: false for older plugin versions
-            def response = httpRequest(
-                url: env.API_ENDPOINT,
-                httpMode: 'POST',
-                contentType: 'APPLICATION_JSON',
-                requestBody: env.API_PAYLOAD,
-                customHeaders: [
-                    [name: 'X-API-Key', value: apiKeyString],
-                    [name: 'Content-Type', value: 'application/json']
-                ],
-                timeout: env.TIMEOUT_SECONDS.toInteger(),
-                failOnError: false, // Do not fail on non-2xx responses
-                ignoreSslErrors: true
-            )
-            
-            env.API_RESPONSE = response.content
-            env.API_STATUS = response.status
-            
-            if (response.status >= 200 && response.status < 300) {
-                echo "✅ Response Status: ${env.API_STATUS}"
-                return // Success, exit retry loop
-            } else {
-                // Handle non-successful responses
-                lastError = "Status: ${response.status}, Body: ${response.content}"
-                echo "❌ API call failed. ${lastError}"
-                retryCount++
-            }
-            
-        } catch (Exception e) {
-            lastError = e.message
+        if (retryCount > 0) {
+            echo "🔄 Retry attempt ${retryCount + 1} of ${maxRetries}"
+            sleep(time: (retryCount * 5), unit: 'SECONDS')
+        }
+
+        // Tell the plugin to consider all HTTP status codes as valid
+        // so we can handle the response manually.
+        def response = httpRequest(
+            url: env.API_ENDPOINT,
+            httpMode: 'POST',
+            contentType: 'APPLICATION_JSON',
+            requestBody: env.API_PAYLOAD,
+            customHeaders: [
+                [name: 'X-API-Key', value: apiKeyString],
+                [name: 'Content-Type', value: 'application/json']
+            ],
+            timeout: env.TIMEOUT_SECONDS.toInteger(),
+            validResponseCodes: '100:599', // Accept all codes
+            ignoreSslErrors: true
+        )
+
+        env.API_RESPONSE = response.content
+        env.API_STATUS = response.status
+
+        // Manually check for a successful status code
+        if (response.status >= 200 && response.status < 300) {
+            echo "✅ Response Status: ${env.API_STATUS}"
+            return // Success, exit the function
+        } else {
+            // This is a logical failure, not a plugin failure
+            lastError = "Status: ${response.status}, Body: ${response.content}"
+            echo "❌ API call failed. ${lastError}"
             retryCount++
-            echo "❌ API call failed with exception: ${e.message}"
         }
     }
     
