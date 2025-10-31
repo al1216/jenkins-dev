@@ -308,10 +308,10 @@ def validateInputs() {
 
 def buildEndpoint(operation) {
     def endpoints = [
-        'onboardInstance': '/api/v1/instance-controller/onboard',
-        'activateInstance': '/api/v1/instance-controller/activate',
-        'deactivateInstance': '/api/v1/instance-controller/deactivate',
-        'updateInstance': '/api/v1/instance-controller/update'
+        'onboardInstance': 'common-auth/api/v1/instance/onboard',
+        'activateInstance': 'common-auth/api/v1/instance/activate',
+        'deactivateInstance': 'common-auth/api/v1/instance/deactivate',
+        'updateInstance': 'common-auth/api/v1/instance/update'
     ]
     
     def path = endpoints[operation]
