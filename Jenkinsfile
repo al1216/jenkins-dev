@@ -35,12 +35,12 @@ pipeline {
         choice(
             name: 'REGION',
             choices: [
-                'US',
-                'UK',
                 'FR',
+                'IE',
                 'IT',
                 'MX',
-                'IE'
+                'UK',
+                'US'
             ],
             description: '🌍 Select AWS region'
         )
@@ -48,29 +48,29 @@ pipeline {
         choice(
             name: 'RETAILER',
             choices: [
-                'ubereats',
-                'bestbuy',
-                'samsclub',
-                'amazon',
-                'hyvee',
-                'overstock',
-                'albertsons',
-                'cvs',
-                'gopuff',
                 'ahold',
-                'instacart',
-                'walgreen',
-                'meijer',
-                'shipt',
-                'target',
-                'wayfair',
-                'fresh',
-                'costco',
-                'kroger',
-                'shoprite',
-                'omni',
+                'albertsons',
+                'amazon',
+                'bestbuy',
                 'chewy',
-                'walmart'
+                'costco',
+                'cvs',
+                'fresh',
+                'gopuff',
+                'hyvee',
+                'instacart',
+                'kroger',
+                'meijer',
+                'omni',
+                'overstock',
+                'samsclub',
+                'shipt',
+                'shoprite',
+                'target',
+                'ubereats',
+                'walgreen',
+                'walmart',
+                'wayfair'
             ],
             description: '🏪 Select retailer'
         )
@@ -78,20 +78,20 @@ pipeline {
         choice(
             name: 'RETAILER_VARIANT',
             choices: [
-                'retail',
-                'hybrid',
-                'native',
-                'rms',
                 '3P',
-                'kevel',
-                'citrus',
                 'api',
                 'business',
-                'fresh',
-                'retailer',
+                'citrus',
+                'criteo',
                 'direct',
+                'fresh',
+                'hybrid',
+                'kevel',
+                'native',
                 'promoteiq',
-                'criteo'
+                'retail',
+                'retailer',
+                'rms'
             ],
             description: '🔖 Select retailer variant'
         )
@@ -105,11 +105,11 @@ pipeline {
         choice(
             name: 'ENABLE_DISABLE_ENTITY',
             choices: [
+                'CLIENT',
                 'FEATURE',
                 'INSTANCE',
                 'REGION',
-                'RETAILER',
-                'CLIENT'
+                'RETAILER'
             ],
             description: '🔧 Entity to enable/disable'
         )
