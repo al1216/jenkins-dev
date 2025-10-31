@@ -9,23 +9,6 @@ pipeline {
     agent any
     
     parameters {
-        string(
-            name: 'JOB_INSTRUCTIONS',
-            defaultValue: '',
-            description: '''<hr><b>HOW TO USE THIS JOB:</b><br><br>
-
-<b>onboardInstance:</b><br>
-  - Onboard a new retailer or account.<br>
-  - Enable a new feature for an existing instance.<br>
-  - Blacklist a feature for an existing instance.<br><br>
-
-<b>activateInstance:</b><br>
-  - Activate a previously onboarded instance.<br>
-  - De-onboard a retailer.<br>
-  - Enable a new region for an existing instance.<br>
-  - Whitelabel a blacklisted feature.<br><hr>'''
-        )
-
         password(
             name: 'X_API_KEY',
             defaultValue: '',
