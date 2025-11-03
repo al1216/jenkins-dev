@@ -1,293 +1,361 @@
 #!/usr/bin/env groovy
 
-/**
- * Jenkins Pipeline for Client Setup Platform API Operations
- * This pipeline enables non-technical users to execute API operations via UI
- */
+// This pipeline uses the Active Choices plugin to create a dynamic UI.
 
 pipeline {
     agent any
-    
-    parameters {
-        password(
-            name: 'X_API_KEY',
-            defaultValue: '',
-            description: '🔑 Your X-API-Key (required for authentication). Contact DevOps if you don\'t have one.'
-        )
-        
-        choice(
-            name: 'OPERATION',
-            choices: [
-                'onboardInstance',
-                'activateInstance'
-            ],
-            description: '🎯 Select the operation to perform'
-        )
-        
-        string(
-            name: 'INSTANCE_NAME',
-            defaultValue: '',
-            description: '📝 Instance name (e.g., walmart-prod-001). Use lowercase with hyphens.'
-        )
-        
-        choice(
-            name: 'REGION',
-            choices: [
-                '',
-                'FR',
-                'IE',
-                'IT',
-                'MX',
-                'UK',
-                'US'
-            ],
-            description: '🌍 Select AWS region (or leave blank for none)'
-        )
-        
-        choice(
-            name: 'RETAILER',
-            choices: [
-                '',
-                'ahold',
-                'albertsons',
-                'amazon',
-                'bestbuy',
-                'chewy',
-                'costco',
-                'cvs',
-                'fresh',
-                'gopuff',
-                'hyvee',
-                'instacart',
-                'kroger',
-                'meijer',
-                'omni',
-                'overstock',
-                'samsclub',
-                'shipt',
-                'shoprite',
-                'target',
-                'ubereats',
-                'walgreen',
-                'walmart',
-                'wayfair'
-            ],
-            description: '🏪 Select retailer (or leave blank for none)'
-        )
-        
-        choice(
-            name: 'RETAILER_VARIANT',
-            choices: [
-                '',
-                '3P',
-                'api',
-                'business',
-                'citrus',
-                'criteo',
-                'direct',
-                'fresh',
-                'hybrid',
-                'kevel',
-                'native',
-                'promoteiq',
-                'retail',
-                'retailer',
-                'rms'
-            ],
-            description: '🔖 Select retailer variant (or leave blank for none)'
-        )
-        
-        choice(
-            name: 'PRODUCT_LINE',
-            choices: ['', 'RMM', 'ESM'],
-            description: '📦 Select the product line (or leave blank for none)'
-        )
-        
-        string(
-            name: 'FEATURE',
-            defaultValue: '',
-            description: '✨ Single feature to enable (e.g., rmm_base)'
-        )
 
+    parameters {
+        // This parameter is a workaround to render HTML descriptions at the top.
         string(
-            name: 'FEATURES',
+            name: 'JOB_INSTRUCTIONS',
             defaultValue: '',
-            description: '✨ Multiple features to enable (comma-separated list, e.g., rmm_base,rmm_dsp)'
-        )
-        
-        choice(
-            name: 'ACTIVATE',
-            choices: ['', 'true', 'false'],
-            description: '⚡ Activate or deactivate the instance (or leave blank for none)'
-        )
-        
-        choice(
-            name: 'ENABLE_DISABLE_ENTITY',
-            choices: [
-                '',
-                'CLIENT',
-                'FEATURE',
-                'INSTANCE',
-                'REGION',
-                'RETAILER'
-            ],
-            description: '🔧 Entity to enable/disable (or leave blank for none)'
-        )
-        
-        booleanParam(
-            name: 'DRY_RUN',
-            defaultValue: false,
-            description: '🔍 Dry run mode (preview without executing)'
+            description: '''<hr><b>HOW TO USE THIS JOB:</b><br><br>
+                1. Select an <b>Operation</b>.<br>
+                2. Select a <b>Purpose</b> for that operation.<br>
+                3. The required input fields will appear below.<br><hr>'''
         )
     }
-    
+
+    properties([
+        parameters([
+            password(
+                name: 'X_API_KEY',
+                defaultValue: '',
+                description: '🔑 Your X-API-Key (required for authentication).'
+            ),
+            choice(
+                name: 'OPERATION',
+                choices: ['onboardInstance', 'activateInstance'],
+                description: '🎯 Select the top-level operation.'
+            ),
+            // Dynamic "Purpose" dropdown
+            [
+                $class: 'CascadeChoiceParameter',
+                name: 'PURPOSE',
+                description: 'Select the specific goal for your operation.',
+                referencedParameters: 'OPERATION',
+                choiceType: 'PT_SINGLE_SELECT',
+                script: [
+                    $class: 'GroovyScript',
+                    script: [
+                        classpath: [],
+                        sandbox: true,
+                        script: '''
+                            if (OPERATION == 'onboardInstance') {
+                                return [
+                                    'Onboard a new retailer or account',
+                                    'Enable a new feature for an existing instance',
+                                    'Blacklist a feature for an existing instance'
+                                ]
+                            } else if (OPERATION == 'activateInstance') {
+                                return [
+                                    'Activate an onboarded instance',
+                                    'De-onboard a retailer',
+                                    'Enable a new region for an existing instance',
+                                    'Whitelabel a blacklisted feature'
+                                ]
+                            } else {
+                                return ['Select an Operation first']
+                            }
+                        '''
+                    ]
+                ]
+            ],
+            // --- Conditionally Visible Parameters ---
+            [
+                $class: 'DynamicParameter',
+                name: 'clientId',
+                description: 'Client ID',
+                choiceType: 'ET_FORMATTED_HTML',
+                script: [
+                    $class: 'GroovyScript',
+                    script: [
+                        classpath: [],
+                        sandbox: true,
+                        script: '''
+                            def neededFor = [
+                                'Onboard a new retailer or account',
+                                'Enable a new feature for an existing instance',
+                                'Blacklist a feature for an existing instance',
+                                'Enable a new region for an existing instance',
+                                'Whitelabel a blacklisted feature'
+                            ]
+                            if (PURPOSE in neededFor) {
+                                return '<input type="text" name="value" class="setting-input" value="">'
+                            }
+                            return ''''''
+                        '''
+                    ]
+                ]
+            ],
+            [
+                $class: 'DynamicParameter',
+                name: 'instanceName',
+                description: 'Instance Name',
+                choiceType: 'ET_FORMATTED_HTML',
+                script: [
+                    $class: 'GroovyScript',
+                    script: [
+                        classpath: [],
+                        sandbox: true,
+                        script: '''
+                            // Almost all operations need this
+                            if (PURPOSE != null && PURPOSE != 'Select an Operation first') {
+                                return '<input type="text" name="value" class="setting-input" value="">'
+                            }
+                            return ''''''
+                        '''
+                    ]
+                ]
+            ],
+            [
+                $class: 'DynamicParameter',
+                name: 'retailer',
+                description: 'Retailer',
+                choiceType: 'ET_FORMATTED_HTML',
+                script: [
+                    $class: 'GroovyScript',
+                    script: [
+                        classpath: [],
+                        sandbox: true,
+                        script: '''
+                            def neededFor = [
+                                'Onboard a new retailer or account',
+                                'Enable a new feature for an existing instance',
+                                'Blacklist a feature for an existing instance',
+                                'De-onboard a retailer',
+                                'Enable a new region for an existing instance',
+                                'Whitelabel a blacklisted feature'
+                            ]
+                            if (PURPOSE in neededFor) {
+                                return '<input type="text" name="value" class="setting-input" value="">'
+                            }
+                            return ''''''
+                        '''
+                    ]
+                ]
+            ],
+            [
+                $class: 'DynamicParameter',
+                name: 'retailerVariant',
+                description: 'Retailer Variant',
+                choiceType: 'ET_FORMATTED_HTML',
+                script: [
+                    $class: 'GroovyScript',
+                    script: [
+                        classpath: [],
+                        sandbox: true,
+                        script: '''
+                            def neededFor = [
+                                'Onboard a new retailer or account',
+                                'Enable a new feature for an existing instance',
+                                'Blacklist a feature for an existing instance',
+                                'De-onboard a retailer',
+                                'Enable a new region for an existing instance',
+                                'Whitelabel a blacklisted feature'
+                            ]
+                            if (PURPOSE in neededFor) {
+                                return '<input type="text" name="value" class="setting-input" value="">'
+                            }
+                            return ''''''
+                        '''
+                    ]
+                ]
+            ],
+            [
+                $class: 'DynamicParameter',
+                name: 'region',
+                description: 'Region',
+                choiceType: 'ET_FORMATTED_HTML',
+                script: [
+                    $class: 'GroovyScript',
+                    script: [
+                        classpath: [],
+                        sandbox: true,
+                        script: '''
+                            def neededFor = [
+                                'Onboard a new retailer or account',
+                                'Enable a new feature for an existing instance',
+                                'Blacklist a feature for an existing instance',
+                                'De-onboard a retailer',
+                                'Enable a new region for an existing instance',
+                                'Whitelabel a blacklisted feature'
+                            ]
+                            if (PURPOSE in neededFor) {
+                                return '<input type="text" name="value" class="setting-input" value="">'
+                            }
+                            return ''''''
+                        '''
+                    ]
+                ]
+            ],
+            [
+                $class: 'DynamicParameter',
+                name: 'productLine',
+                description: 'Product Line',
+                choiceType: 'ET_FORMATTED_HTML',
+                script: [
+                    $class: 'GroovyScript',
+                    script: [
+                        classpath: [],
+                        sandbox: true,
+                        script: '''
+                            def neededFor = [
+                                'Onboard a new retailer or account',
+                                'Enable a new feature for an existing instance',
+                                'Blacklist a feature for an existing instance',
+                                'Enable a new region for an existing instance',
+                                'Whitelabel a blacklisted feature'
+                            ]
+                            if (PURPOSE in neededFor) {
+                                return '<select name="value"><option value=""></option><option value="RMM">RMM</option><option value="ESM">ESM</option></select>'
+                            }
+                            return ''''''
+                        '''
+                    ]
+                ]
+            ],
+            [
+                $class: 'DynamicParameter',
+                name: 'features',
+                description: 'Features (comma-separated)',
+                choiceType: 'ET_FORMATTED_HTML',
+                script: [
+                    $class: 'GroovyScript',
+                    script: [
+                        classpath: [],
+                        sandbox: true,
+                        script: '''
+                            def neededFor = [
+                                'Onboard a new retailer or account',
+                                'Enable a new feature for an existing instance',
+                                'Blacklist a feature for an existing instance',
+                                'Enable a new region for an existing instance'
+                            ]
+                            if (PURPOSE in neededFor) {
+                                return '<input type="text" name="value" class="setting-input" value="">'
+                            }
+                            return ''''''
+                        '''
+                    ]
+                ]
+            ],
+            [
+                $class: 'DynamicParameter',
+                name: 'feature',
+                description: 'Feature (single)',
+                choiceType: 'ET_FORMATTED_HTML',
+                script: [
+                    $class: 'GroovyScript',
+                    script: [
+                        classpath: [],
+                        sandbox: true,
+                        script: '''
+                            if (PURPOSE == 'Whitelabel a blacklisted feature') {
+                                return '<input type="text" name="value" class="setting-input" value="">'
+                            }
+                            return ''''''
+                        '''
+                    ]
+                ]
+            ],
+            [
+                $class: 'DynamicParameter',
+                name: 'enableDisableEntity',
+                description: 'Entity to Enable/Disable',
+                choiceType: 'ET_FORMATTED_HTML',
+                script: [
+                    $class: 'GroovyScript',
+                    script: [
+                        classpath: [],
+                        sandbox: true,
+                        script: '''
+                            def neededFor = [
+                                'Activate an onboarded instance',
+                                'De-onboard a retailer',
+                                'Whitelabel a blacklisted feature'
+                            ]
+                            if (PURPOSE in neededFor) {
+                                return '<input type="text" name="value" class="setting-input" value="">'
+                            }
+                            return ''''''
+                        '''
+                    ]
+                ]
+            ],
+            [
+                $class: 'DynamicParameter',
+                name: 'activate',
+                description: 'Activate?',
+                choiceType: 'ET_FORMATTED_HTML',
+                script: [
+                    $class: 'GroovyScript',
+                    script: [
+                        classpath: [],
+                        sandbox: true,
+                        script: '''
+                            def neededFor = [
+                                'Activate an onboarded instance',
+                                'De-onboard a retailer',
+                                'Whitelabel a blacklisted feature'
+                            ]
+                            if (PURPOSE in neededFor) {
+                                return '<select name="value"><option value="true">true</option><option value="false">false</option></select>'
+                            }
+                            return ''''''
+                        '''
+                    ]
+                ]
+            ],
+            booleanParam(
+                name: 'DRY_RUN',
+                defaultValue: false,
+                description: '🔍 Dry run mode (preview without executing)'
+            )
+        ])
+    ])
+
     environment {
         API_BASE_URL = 'http://client-setup-platform.beta-dbx.commerceiq.ai'
         TIMEOUT_SECONDS = '30'
         RETRY_COUNT = '3'
     }
-    
+
     stages {
-        stage('🔍 Initialize') {
+        stage('🔨 Build and Execute') {
             steps {
                 script {
-                    echo """
-╔═══════════════════════════════════════════════════════════════╗
-║  CLIENT SETUP PLATFORM - INSTANCE OPERATION                   ║
-╠═══════════════════════════════════════════════════════════════╣
-║                                                               ║
-║  📋 Operation Details:                                        ║
-║  ──────────────────────────────────────────────────────────  ║
-║  API Key Provided  : ${params.X_API_KEY.toString() ? '✓ Yes (hidden)' : '✗ No'} ║
-║  Operation Type    : ${params.OPERATION}                      ║
-║  Instance Name     : ${params.INSTANCE_NAME}                  ║
-║  Region           : ${params.REGION ?: 'N/A'}                          ║
-║  Retailer         : ${params.RETAILER ?: 'N/A'}                        ║
-║  Retailer Variant : ${params.RETAILER_VARIANT ?: 'N/A'}               ║
-║  Product Line     : ${params.PRODUCT_LINE ?: 'N/A'}                  ║
-║  Feature          : ${params.FEATURE ?: 'N/A'}                       ║
-║  Features         : ${params.FEATURES ?: 'N/A'}                      ║
-║  Activate         : ${params.ACTIVATE ?: 'N/A'}                        ║
-║  Entity           : ${params.ENABLE_DISABLE_ENTITY ?: 'N/A'}           ║
-║  Dry Run          : ${params.DRY_RUN}                         ║
-║                                                               ║
-║  Executed by      : ${env.BUILD_USER ?: 'System'}            ║
-║  Build Number     : #${env.BUILD_NUMBER}                      ║
-║  Timestamp        : ${new Date()}                             ║
-║                                                               ║
-╚═══════════════════════════════════════════════════════════════╝
-                    """
-                }
-            }
-        }
-        
-        stage('✅ Validate Parameters') {
-            steps {
-                script {
-                    echo "🔍 Validating input parameters..."
-                    validateInputs()
-                    echo "✅ All parameters are valid"
-                }
-            }
-        }
-        
-        stage('🔨 Build API Request') {
-            steps {
-                script {
-                    echo "🔨 Building API request..."
-                    
-                    // Build endpoint
-                    env.API_ENDPOINT = buildEndpoint(params.OPERATION)
-                    echo "📍 Endpoint: ${env.API_ENDPOINT}"
-                    
-                    // Build payload
+                    echo "--- Starting Operation ---"
                     env.API_PAYLOAD = buildPayload()
-                    echo """
-📦 Payload:
-${prettyPrintJson(env.API_PAYLOAD)}
-                    """
-                }
-            }
-        }
-        
-        stage('🚀 Execute API Call') {
-            when {
-                expression { return !params.DRY_RUN }
-            }
-            steps {
-                script {
-                    echo "🚀 Executing API call..."
-                    executeAPICall()
-                }
-            }
-        }
-        
-        stage('🔍 Dry Run Summary') {
-            when {
-                expression { return params.DRY_RUN }
-            }
-            steps {
-                script {
-                    echo """
-╔═══════════════════════════════════════════════════════════════╗
-║  🔍 DRY RUN MODE - NO API CALL EXECUTED                       ║
-╠═══════════════════════════════════════════════════════════════╣
-║                                                               ║
-║  The following API call would be executed:                   ║
-║                                                               ║
-║  URL: ${env.API_ENDPOINT}                                     ║
-║  Method: POST                                                 ║
-║  Payload: (see above)                                         ║
-║                                                               ║
-║  To execute for real, uncheck "Dry Run" option               ║
-║                                                               ║
-╚═══════════════════════════════════════════════════════════════╝
-                    """
-                }
-            }
-        }
-        
-        stage('📊 Display Results') {
-            when {
-                expression { return !params.DRY_RUN }
-            }
-            steps {
-                script {
-                    displayResults()
+                    echo "Final Payload:\n${prettyPrintJson(env.API_PAYLOAD)}"
+                    
+                    if (!params.DRY_RUN) {
+                        executeAPICall()
+                    } else {
+                        echo "\n--- DRY RUN: API Call would be executed with the payload above ---"
+                    }
                 }
             }
         }
     }
     
     post {
+        // Post-build actions remain the same
         success {
             script {
-                echo """
-╔═══════════════════════════════════════════════════════════════╗
-║  ✅ OPERATION COMPLETED SUCCESSFULLY                          ║
-╚═══════════════════════════════════════════════════════════════╝
-                """
-                notifySuccess()
+                echo "✅ OPERATION COMPLETED SUCCESSFULLY"
+                // notifySuccess() // Optional notifications
             }
         }
-        
         failure {
             script {
-                echo """
-╔═══════════════════════════════════════════════════════════════╗
-║  ❌ OPERATION FAILED                                          ║
-║                                                               ║
-║  Please check the console output above for error details.    ║
-║  Contact DevOps team if you need assistance.                 ║
-╚═══════════════════════════════════════════════════════════════╝
-                """
-                notifyFailure()
+                echo "❌ OPERATION FAILED"
+                // notifyFailure() // Optional notifications
             }
         }
-        
         always {
             script {
-                // Archive artifacts and logs
                 archiveAuditLog()
             }
         }
@@ -298,56 +366,8 @@ ${prettyPrintJson(env.API_PAYLOAD)}
 // HELPER FUNCTIONS
 // ============================================================================
 
-def validateInputs() {
-    // Validate X-API-Key
-    def apiKey = params.X_API_KEY.toString()
-    if (apiKey.trim().isEmpty()) {
-        error("❌ X-API-Key is required! Please provide your API key. Contact DevOps if you don't have one.")
-    }
-    
-    if (apiKey.length() < 10) {
-        error("❌ X-API-Key appears to be invalid (too short). Please check your API key.")
-    }
-    
-    // Validate instance name
-    if (!params.INSTANCE_NAME || params.INSTANCE_NAME.trim().isEmpty()) {
-        error("❌ Instance name is required!")
-    }
-    
-    if (!params.INSTANCE_NAME.matches(/^[a-zA-Z0-9-_]+$/)) {
-        error("❌ Instance name can only contain alphanumeric characters, hyphens, and underscores")
-    }
-    
-    if (params.INSTANCE_NAME.length() < 3 || params.INSTANCE_NAME.length() > 50) {
-        error("❌ Instance name must be between 3 and 50 characters")
-    }
-    
-    // Validate retailer variant matches retailer only if both are provided
-    if (params.RETAILER_VARIANT && params.RETAILER) {
-        def retailerPrefix = params.RETAILER_VARIANT.split('-')[0]
-        if (retailerPrefix != params.RETAILER && params.RETAILER_VARIANT != 'custom-variant') {
-            echo "⚠️  Warning: Retailer variant '${params.RETAILER_VARIANT}' may not match retailer '${params.RETAILER}'"
-        }
-    }
-}
-
-def buildEndpoint(operation) {
-    def endpoints = [
-        'onboardInstance': '/common-auth/api/v1/instance/onboard',
-        'activateInstance': '/common-auth/api/v1/instance/activate'
-    ]
-    
-    def path = endpoints[operation]
-    if (!path) {
-        error("❌ Unknown operation: ${operation}")
-    }
-    
-    return "${env.API_BASE_URL}${path}"
-}
-
 def buildPayload() {
     def payload = [
-        instanceName: params.INSTANCE_NAME,
         user: "ops@commerceiq.ai",
         metadata: [
             executedBy: env.BUILD_USER ?: 'System',
@@ -356,40 +376,48 @@ def buildPayload() {
         ]
     ]
 
-    if (params.REGION) {
-        payload.region = params.REGION
-    }
-    if (params.RETAILER) {
-        payload.retailer = params.RETAILER
-    }
-    if (params.RETAILER_VARIANT) {
-        payload.retailerVariant = params.RETAILER_VARIANT
-    }
-    if (params.PRODUCT_LINE) {
-        payload.productLine = params.PRODUCT_LINE
-    }
-    if (params.FEATURE) {
-        payload.feature = params.FEATURE.trim()
-    }
-    if (params.FEATURES) {
-        payload.features = params.FEATURES.split(',').collect { it.trim() }
-    }
-    if (params.ACTIVATE) {
-        payload.activate = params.ACTIVATE.toBoolean()
-    }
-    if (params.ENABLE_DISABLE_ENTITY) {
-        payload.enableDisableEntity = params.ENABLE_DISABLE_ENTITY
-    }
+    // Conditionally add parameters to the payload if they exist and are not empty
+    if (params.clientId) payload.clientId = params.clientId
+    if (params.instanceName) payload.instanceName = params.instanceName
+    if (params.retailer) payload.retailer = params.retailer
+    if (params.retailerVariant) payload.retailerVariant = params.retailerVariant
+    if (params.region) payload.region = params.region
+    if (params.productLine) payload.productLine = params.productLine
+    if (params.activate) payload.activate = params.activate.toBoolean()
+    if (params.enableDisableEntity) payload.enableDisableEntity = params.enableDisableEntity
     
-    return groovy.json.JsonOutput.toJson(payload)
+    // Handle features and feature
+    def featuresList = []
+    if (params.features) {
+        featuresList.addAll(params.features.split(',').collect { it.trim() })
+    }
+    if (params.feature) {
+        // If the API expects a single feature as a string, not in an array
+        if (PURPOSE == 'Whitelabel a blacklisted feature') {
+             payload.feature = params.feature.trim()
+        } else {
+             featuresList.add(params.feature.trim())
+        }
+    }
+
+    if (featuresList) {
+        payload.features = featuresList
+    }
+
+    return payload
 }
 
 def executeAPICall() {
+    // This function remains largely the same, but gets the endpoint dynamically
+    def endpoint = (params.OPERATION == 'onboardInstance') ? '/common-auth/api/v1/instance/onboard' : '/common-auth/api/v1/instance/activate'
+    env.API_ENDPOINT = "${env.API_BASE_URL}${endpoint}"
+
+    echo "🚀 Executing API call to ${env.API_ENDPOINT}..."
+
     def maxRetries = env.RETRY_COUNT.toInteger()
     def retryCount = 0
     def lastError = null
     
-    // Convert the secret to a string to avoid issues with the httpRequest plugin
     def apiKeyString = params.X_API_KEY.toString()
 
     while (retryCount < maxRetries) {
@@ -398,161 +426,44 @@ def executeAPICall() {
             sleep(time: (retryCount * 5), unit: 'SECONDS')
         }
 
-        // Tell the plugin to consider all HTTP status codes as valid
-        // so we can handle the response manually.
         def response = httpRequest(
             url: env.API_ENDPOINT,
             httpMode: 'POST',
             contentType: 'APPLICATION_JSON',
-            requestBody: env.API_PAYLOAD,
+            requestBody: groovy.json.JsonOutput.toJson(buildPayload()),
             customHeaders: [
                 [name: 'X-API-Key', value: apiKeyString],
                 [name: 'Content-Type', value: 'application/json']
             ],
             timeout: env.TIMEOUT_SECONDS.toInteger(),
-            validResponseCodes: '100:599', // Accept all codes
-            ignoreSslErrors: true
+            validResponseCodes: '100:599' // Accept all codes to handle manually
         )
 
         env.API_RESPONSE = response.content
         env.API_STATUS = response.status
 
-        // Manually check for a successful status code
         if (response.status >= 200 && response.status < 300) {
             echo "✅ Response Status: ${env.API_STATUS}"
-            return // Success, exit the function
+            echo "📄 Raw Response: ${env.API_RESPONSE}"
+            return
         } else {
-            // This is a logical failure, not a plugin failure
             lastError = "Status: ${response.status}, Body: ${response.content}"
             echo "❌ API call failed. ${lastError}"
             retryCount++
         }
     }
     
-    // If all retries fail, stop the build
     error("❌ All ${maxRetries} attempts failed. Last error: ${lastError}")
 }
 
-def displayResults() {
+def prettyPrintJson(json) {
     try {
-        def responseJson = readJSON text: env.API_RESPONSE
-        
-        echo """
-╔═══════════════════════════════════════════════════════════════╗
-║  📊 OPERATION RESULTS                                         ║
-╠═══════════════════════════════════════════════════════════════╣
-║                                                               ║
-║  Status Code      : ${env.API_STATUS}                         ║
-║  Status           : ${responseJson.status ?: 'Success'}       ║
-║  Message          : ${responseJson.message ?: 'Completed'}    ║
-║                                                               ║
-║  Instance Details:                                            ║
-║  ──────────────────────────────────────────────────────────  ║
-║  Instance ID      : ${responseJson.instanceId ?: 'N/A'}       ║
-║  Instance Name    : ${params.INSTANCE_NAME}                   ║
-║  Region           : ${params.REGION}                          ║
-║  Retailer         : ${params.RETAILER}                        ║
-║  Status           : ${responseJson.instanceStatus ?: 'N/A'}   ║
-║                                                               ║
-║  Execution Info:                                              ║
-║  ──────────────────────────────────────────────────────────  ║
-║  Timestamp        : ${new Date()}                             ║
-║  Executed By      : ${env.BUILD_USER ?: 'System'}            ║
-║  Build Number     : #${env.BUILD_NUMBER}                      ║
-║  Duration         : ${currentBuild.durationString}            ║
-║                                                               ║
-╚═══════════════════════════════════════════════════════════════╝
-
-Full Response:
-${prettyPrintJson(env.API_RESPONSE)}
-        """
+        // If it's a map/list, convert to JSON string first
+        def jsonString = (json instanceof String) ? json : groovy.json.JsonOutput.toJson(json)
+        def jsonObj = readJSON text: jsonString
+        return groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(jsonObj))
     } catch (Exception e) {
-        echo "📄 Raw Response: ${env.API_RESPONSE}"
-    }
-}
-
-def prettyPrintJson(jsonString) {
-    try {
-        def json = readJSON text: jsonString
-        return groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(json))
-    } catch (Exception e) {
-        return jsonString
-    }
-}
-
-def notifySuccess() {
-    // Email notification
-    emailext(
-        subject: "✅ Client Setup: ${params.OPERATION} - SUCCESS",
-        body: """
-Hello,
-
-Your Client Setup Platform operation has completed successfully!
-
-Operation Details:
-- Operation: ${params.OPERATION}
-- Instance: ${params.INSTANCE_NAME}
-- Region: ${params.REGION}
-- Retailer: ${params.RETAILER}
-- Executed by: ${env.BUILD_USER ?: 'System'}
-
-Build URL: ${env.BUILD_URL}
-
-Thanks,
-Jenkins Automation
-        """,
-        to: "${env.BUILD_USER_EMAIL}",
-        mimeType: 'text/plain'
-    )
-    
-    // Slack notification (if configured)
-    try {
-        slackSend(
-            channel: '#client-setup-notifications',
-            color: 'good',
-            message: "✅ *${params.OPERATION}* completed successfully for instance `${params.INSTANCE_NAME}` by ${env.BUILD_USER ?: 'System'}"
-        )
-    } catch (Exception e) {
-        echo "Slack notification skipped: ${e.message}"
-    }
-}
-
-def notifyFailure() {
-    emailext(
-        subject: "❌ Client Setup: ${params.OPERATION} - FAILED",
-        body: """
-Hello,
-
-Your Client Setup Platform operation has failed.
-
-Operation Details:
-- Operation: ${params.OPERATION}
-- Instance: ${params.INSTANCE_NAME}
-- Region: ${params.REGION}
-- Retailer: ${params.RETAILER}
-- Executed by: ${env.BUILD_USER ?: 'System'}
-
-Please check the build logs for details:
-${env.BUILD_URL}console
-
-Contact DevOps team if you need assistance.
-
-Thanks,
-Jenkins Automation
-        """,
-        to: "${env.BUILD_USER_EMAIL}",
-        mimeType: 'text/plain'
-    )
-    
-    // Slack notification (if configured)
-    try {
-        slackSend(
-            channel: '#client-setup-alerts',
-            color: 'danger',
-            message: "❌ *${params.OPERATION}* failed for instance `${params.INSTANCE_NAME}` by ${env.BUILD_USER ?: 'System'}. <${env.BUILD_URL}|View Logs>"
-        )
-    } catch (Exception e) {
-        echo "Slack notification skipped: ${e.message}"
+        return json.toString() // Fallback for non-json or invalid json
     }
 }
 
@@ -561,23 +472,20 @@ def archiveAuditLog() {
         buildNumber: env.BUILD_NUMBER,
         timestamp: new Date().format("yyyy-MM-dd'T'HH:mm:ss'Z'"),
         user: env.BUILD_USER ?: 'System',
-        userEmail: env.BUILD_USER_EMAIL ?: 'N/A',
         operation: params.OPERATION,
-        parameters: [
-            instanceName: params.INSTANCE_NAME,
-            region: params.REGION,
-            retailer: params.RETAILER,
-            retailerVariant: params.RETAILER_VARIANT,
-            activate: params.ACTIVATE,
-            enableDisableEntity: params.ENABLE_DISABLE_ENTITY,
-            dryRun: params.DRY_RUN
-        ],
+        purpose: params.PURPOSE,
+        parameters: params,
         result: currentBuild.result,
         duration: currentBuild.durationString,
         apiEndpoint: env.API_ENDPOINT,
-        apiStatus: env.API_STATUS
+        apiStatus: env.API_STATUS,
+        apiResponse: env.API_RESPONSE
     ]
     
     writeJSON file: "audit-log-${env.BUILD_NUMBER}.json", json: auditLog, pretty: 4
     archiveArtifacts artifacts: "audit-log-${env.BUILD_NUMBER}.json", allowEmptyArchive: true
 }
+
+// Notification functions can be added back here if needed
+// def notifySuccess() { ... }
+// def notifyFailure() { ... }
