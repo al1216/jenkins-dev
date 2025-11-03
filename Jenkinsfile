@@ -24,57 +24,57 @@ pipeline {
                 'Whitelabel a blacklisted feature'
             ],
             description: '🎯 Select the specific goal for your operation. The required fields will be used based on this choice.'
-        ),
+        )
         string(
             name: 'clientId',
             defaultValue: '',
             description: '<b>(Required for most operations)</b> The Client ID.'
-        ),
+        )
         string(
             name: 'instanceName',
             defaultValue: '',
             description: '<b>(Required for all operations)</b> The Instance Name.'
-        ),
+        )
         string(
             name: 'retailer',
             defaultValue: '',
             description: '<b>(Required for Onboarding, De-onboarding, etc.)</b> The retailer.'
-        ),
+        )
         string(
             name: 'retailerVariant',
             defaultValue: '',
             description: '<b>(Required for Onboarding, De-onboarding, etc.)</b> The retailer variant.'
-        ),
+        )
         string(
             name: 'region',
             defaultValue: '',
             description: '<b>(Required for Onboarding, Region Enablement, etc.)</b> The region.'
-        ),
+        )
         choice(
             name: 'productLine',
             choices: ['', 'RMM', 'ESM'],
             description: '<b>(Required for Onboarding, Feature changes, etc.)</b> The Product Line.'
-        ),
+        )
         string(
             name: 'features',
             defaultValue: '',
             description: '<b>(For Onboarding/Enabling multiple features)</b> Comma-separated list of features.'
-        ),
+        )
         string(
             name: 'feature',
             defaultValue: '',
             description: '<b>(For Whitelabeling a single feature)</b> The single feature name.'
-        ),
+        )
         string(
             name: 'enableDisableEntity',
             defaultValue: '',
             description: '<b>(For Activation/Deactivation)</b> The entity to act upon (e.g., INSTANCE, RETAILER).'
-        ),
+        )
         choice(
             name: 'activate',
             choices: ['true', 'false'],
             description: '<b>(For Activation/Deactivation)</b> Set to true or false.'
-        ),
+        )
         booleanParam(
             name: 'DRY_RUN',
             defaultValue: false,
