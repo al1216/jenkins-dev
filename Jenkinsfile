@@ -16,6 +16,11 @@ pipeline {
             description: '🔑 Your X-API-Key (required for authentication).'
         )
         choice(
+            name: 'STAGING_ENV',
+            choices: ['beta', 'qa', 'prod'],
+            description: '🌍 Select the environment for the operation.'
+        )
+        choice(
             name: 'PURPOSE',
             choices: [
                 '',
@@ -80,7 +85,6 @@ pipeline {
     }
 
     environment {
-        API_BASE_URL = 'http://client-setup-platform.beta-dbx.commerceiq.ai'
         TIMEOUT_SECONDS = '30'
         RETRY_COUNT = '3'
     }
@@ -95,12 +99,16 @@ pipeline {
                         error('You must select a Purpose for the operation.')
                     }
 
+                    // Dynamically set API_BASE_URL based on the selected environment
+                    def apiBaseUrl = "http://client-setup-platform.${params.STAGING_ENV}-dbx.commerceiq.ai"
+                    echo "API Host: ${apiBaseUrl}"
+
                     // ✅ Build the payload as a Groovy map (NOT stored in env)
                     def payload = buildPayload()
                     echo "Final Payload:\n${prettyPrintJson(payload)}"
 
                     if (!params.DRY_RUN) {
-                        executeAPICall(payload)
+                        executeAPICall(payload, apiBaseUrl)
                     } else {
                         echo "\n--- DRY RUN: API Call would be executed with the payload above ---"
                     }
@@ -207,7 +215,7 @@ def buildPayload() {
     return payload
 }
 
-def executeAPICall(payload) {
+def executeAPICall(payload, apiBaseUrl) {
     def onboardPurposes = [
         'Onboard a new retailer or account',
         'Enable a new feature for an existing instance',
@@ -234,7 +242,7 @@ def executeAPICall(payload) {
         ? '/common-auth/api/v1/instance/onboard'
         : '/common-auth/api/v1/instance/activate-deactivate'
 
-    def fullUrl = "${env.API_BASE_URL}${endpoint}"
+    def fullUrl = "${apiBaseUrl}${endpoint}"
 
     echo "🚀 Executing API call to ${fullUrl}..."
 
