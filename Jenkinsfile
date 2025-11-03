@@ -205,7 +205,7 @@ def buildPayload() {
         case 'Onboard a new retailer or account':
         case 'Enable a new feature for an existing instance':
         case 'Blacklist a feature for an existing instance':
-            payload.clientId = params.clientId
+            payload.clientId = params.clientId.toInteger()
             payload.instanceName = params.instanceName
             payload.retailer = params.retailer
             payload.retailerVariant = params.retailerVariant
@@ -232,7 +232,7 @@ def buildPayload() {
             break
 
         case 'Enable a new region for an existing instance':
-            payload.clientId = params.clientId
+            payload.clientId = params.clientId.toInteger()
             payload.instanceName = params.instanceName
             payload.retailer = params.retailer
             payload.retailerVariant = params.retailerVariant
@@ -250,7 +250,7 @@ def buildPayload() {
             payload.retailer = params.retailer
             payload.retailerVariant = params.retailerVariant
             payload.activate = params.activate.toBoolean()
-            payload.clientId = params.clientId
+            payload.clientId = params.clientId.toInteger()
             payload.productLine = params.productLine
             payload.feature = params.feature
             break
