@@ -167,6 +167,8 @@ def buildPayload() {
         case 'Enable a new region for an existing instance':
             payload.clientId = params.clientId.toInteger()
             payload.instanceName = params.instanceName
+            payload.enableDisableEntity = params.enableDisableEntity
+            payload.activate = params.activate.toBoolean()
             payload.retailer = params.retailer
             payload.retailerVariant = params.retailerVariant
             payload.region = params.region
