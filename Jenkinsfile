@@ -25,7 +25,8 @@ pipeline {
                 'Activate an onboarded instance',
                 'De-onboard a retailer',
                 'Enable a new region for an existing instance',
-                'Whitelabel a blacklisted feature'
+                'Whitelabel a blacklisted feature',
+                'Disable a module'
             ],
             description: '🎯 Select the specific goal for your operation.'
         )
@@ -189,6 +190,18 @@ def buildPayload() {
             payload.productLine = params.productLine
             payload.feature = params.feature
             break
+
+        case 'Disable a module':
+            payload.instanceName = params.instanceName
+            payload.enableDisableEntity = params.enableDisableEntity
+            payload.clientId = params.clientId.toInteger()
+            payload.region = params.region
+            payload.retailer = params.retailer
+            payload.retailerVariant = params.retailerVariant
+            payload.productLine = params.productLine
+            payload.feature = params.feature
+            payload.activate = params.activate.toBoolean()
+            break
     }
 
     return payload
@@ -204,7 +217,8 @@ def executeAPICall(payload) {
         'Activate an onboarded instance',
         'De-onboard a retailer',
         'Enable a new region for an existing instance',
-        'Whitelabel a blacklisted feature'
+        'Whitelabel a blacklisted feature',
+        'Disable a module'
     ]
 
     def operation
