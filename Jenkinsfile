@@ -28,12 +28,12 @@ pipeline {
         string(
             name: 'clientId',
             defaultValue: '',
-            description: '(Required for most operations)</b> The Client ID.'
+            description: '(Required for most operations) The Client ID.'
         )
         string(
             name: 'instanceName',
             defaultValue: '',
-            description: '(Required for all operations)</b> The Instance Name.'
+            description: '(Required for all operations) The Instance Name.'
         )
         choice(
             name: 'retailer',
@@ -63,7 +63,7 @@ pipeline {
                 'walmart',
                 'wayfair'
             ],
-            description: '(Required for Onboarding, De-onboarding, etc.)</b> Select the retailer.'
+            description: '(Required for Onboarding, De-onboarding, etc.) Select the retailer.'
         )
         choice(
             name: 'retailerVariant',
@@ -84,7 +84,7 @@ pipeline {
                 'retailer',
                 'rms'
             ],
-            description: '(Required for Onboarding, De-onboarding, etc.)</b> Select the retailer variant.'
+            description: '(Required for Onboarding, De-onboarding, etc.) Select the retailer variant.'
         )
         choice(
             name: 'region',
@@ -97,22 +97,22 @@ pipeline {
                 'UK',
                 'US'
             ],
-            description: '(Required for Onboarding, Region Enablement, etc.)</b> Select the region.'
+            description: '(Required for Onboarding, Region Enablement, etc.) Select the region.'
         )
         choice(
             name: 'productLine',
             choices: ['', 'RMM', 'ESM'],
-            description: '(Required for Onboarding, Feature changes, etc.)</b> The Product Line.'
+            description: '(Required for Onboarding, Feature changes, etc.) The Product Line.'
         )
         string(
             name: 'features',
             defaultValue: '',
-            description: '(For Onboarding/Enabling multiple features)</b> Comma-separated list of features.'
+            description: '(For Onboarding/Enabling multiple features) Comma-separated list of features.'
         )
         string(
             name: 'feature',
             defaultValue: '',
-            description: '(For Whitelabeling a single feature)</b> The single feature name.'
+            description: '(For Whitelabeling a single feature) The single feature name.'
         )
         choice(
             name: 'enableDisableEntity',
@@ -124,12 +124,12 @@ pipeline {
                 'REGION',
                 'RETAILER'
             ],
-            description: '(For Activation/Deactivation)</b> Select the entity to act upon.'
+            description: '(For Activation/Deactivation) Select the entity to act upon.'
         )
         choice(
             name: 'activate',
             choices: ['true', 'false'],
-            description: '(For Activation/Deactivation)</b> Set to true or false.'
+            description: '(For Activation/Deactivation) Set to true or false.'
         )
         booleanParam(
             name: 'DRY_RUN',
@@ -302,13 +302,14 @@ def executeAPICall() {
             url: env.API_ENDPOINT,
             httpMode: 'POST',
             contentType: 'APPLICATION_JSON',
-            requestBody: groovy.json.JsonOutput.toJson(buildPayload()),
+            requestBody: env.API_PAYLOAD,
             customHeaders: [
                 [name: 'X-API-Key', value: apiKeyString],
                 [name: 'Content-Type', value: 'application/json']
             ],
             timeout: env.TIMEOUT_SECONDS.toInteger(),
-            validResponseCodes: '100:599' // Accept all codes to handle manually
+            validResponseCodes: '100:599', // Accept all codes to handle manually
+            ignoreSslErrors: true
         )
 
         env.API_RESPONSE = response.content
