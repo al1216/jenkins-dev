@@ -2,7 +2,9 @@
 
 import groovy.json.JsonOutput
 
-// This pipeline uses standard parameters and intelligent payload creation.
+// ============================================================================
+// Jenkinsfile: Intelligent Client Setup Platform Automation
+// ============================================================================
 
 pipeline {
     agent any
@@ -25,108 +27,44 @@ pipeline {
                 'Enable a new region for an existing instance',
                 'Whitelabel a blacklisted feature'
             ],
-            description: '🎯 Select the specific goal for your operation. The required fields will be used based on this choice.'
+            description: '🎯 Select the specific goal for your operation.'
         )
-        string(
-            name: 'clientId',
-            defaultValue: '',
-            description: '(Required for most operations) The Client ID.'
-        )
-        string(
-            name: 'instanceName',
-            defaultValue: '',
-            description: '(Required for all operations) The Instance Name.'
-        )
+        string(name: 'clientId', defaultValue: '', description: 'The Client ID (required for most operations).')
+        string(name: 'instanceName', defaultValue: '', description: 'The Instance Name (required for all operations).')
         choice(
             name: 'retailer',
             choices: [
-                '',
-                'ahold',
-                'albertsons',
-                'amazon',
-                'bestbuy',
-                'chewy',
-                'costco',
-                'cvs',
-                'fresh',
-                'gopuff',
-                'hyvee',
-                'instacart',
-                'kroger',
-                'meijer',
-                'omni',
-                'overstock',
-                'samsclub',
-                'shipt',
-                'shoprite',
-                'target',
-                'ubereats',
-                'walgreen',
-                'walmart',
-                'wayfair'
+                '', 'ahold', 'albertsons', 'amazon', 'bestbuy', 'chewy', 'costco', 'cvs',
+                'fresh', 'gopuff', 'hyvee', 'instacart', 'kroger', 'meijer', 'omni',
+                'overstock', 'samsclub', 'shipt', 'shoprite', 'target', 'ubereats',
+                'walgreen', 'walmart', 'wayfair'
             ],
-            description: '(Required for Onboarding, De-onboarding, etc.) Select the retailer.'
+            description: 'Select the retailer (for onboarding, de-onboarding, etc.).'
         )
         choice(
             name: 'retailerVariant',
             choices: [
-                '',
-                '3P',
-                'api',
-                'business',
-                'citrus',
-                'criteo',
-                'direct',
-                'fresh',
-                'hybrid',
-                'kevel',
-                'native',
-                'promoteiq',
-                'retail',
-                'retailer',
-                'rms'
+                '', '3P', 'api', 'business', 'citrus', 'criteo', 'direct', 'fresh',
+                'hybrid', 'kevel', 'native', 'promoteiq', 'retail', 'retailer', 'rms'
             ],
-            description: '(Required for Onboarding, De-onboarding, etc.) Select the retailer variant.'
+            description: 'Select the retailer variant.'
         )
         choice(
             name: 'region',
-            choices: [
-                '',
-                'FR',
-                'IE',
-                'IT',
-                'MX',
-                'UK',
-                'US'
-            ],
-            description: '(Required for Onboarding, Region Enablement, etc.) Select the region.'
+            choices: ['', 'FR', 'IE', 'IT', 'MX', 'UK', 'US'],
+            description: 'Select the region (for onboarding, region enablement, etc.).'
         )
         choice(
             name: 'productLine',
             choices: ['', 'RMM', 'ESM'],
-            description: '(Required for Onboarding, Feature changes, etc.) The Product Line.'
+            description: 'Product Line (required for onboarding/feature changes).'
         )
-        string(
-            name: 'features',
-            defaultValue: '',
-            description: '(For Onboarding/Enabling multiple features) Comma-separated list of features.'
-        )
-        string(
-            name: 'feature',
-            defaultValue: '',
-            description: '(For Whitelabeling a single feature) The single feature name.'
-        )
+        string(name: 'features', defaultValue: '', description: 'Comma-separated list of features (for onboarding/enabling multiple).')
+        string(name: 'feature', defaultValue: '', description: 'Single feature name (for whitelabeling a single feature).')
         choice(
             name: 'enableDisableEntity',
-            choices: [
-                '',
-                'CLIENT',
-                'FEATURE',
-                'INSTANCE',
-                'REGION',
-                'RETAILER'
-            ],
-            description: '(For Activation/Deactivation) Select the entity to act upon.'
+            choices: ['', 'CLIENT', 'FEATURE', 'INSTANCE', 'REGION', 'RETAILER'],
+            description: '(For Activation/Deactivation) Select the entity.'
         )
         choice(
             name: 'activate',
@@ -136,7 +74,7 @@ pipeline {
         booleanParam(
             name: 'DRY_RUN',
             defaultValue: false,
-            description: '🔍 Dry run mode (preview without executing)'
+            description: '🔍 Dry run mode (preview without executing).'
         )
     }
 
@@ -151,39 +89,33 @@ pipeline {
             steps {
                 script {
                     echo "--- Starting Operation for Purpose: ${params.PURPOSE} ---"
-                    
+
                     if (params.PURPOSE.isEmpty()) {
                         error('You must select a Purpose for the operation.')
                     }
 
-                    env.API_PAYLOAD = buildPayload()
-                    echo "Final Payload:\n${prettyPrintJson(groovy.json.JsonOutput.toJson(env.API_PAYLOAD))}"
-                    
+                    // ✅ Build the payload as a Groovy map (NOT stored in env)
+                    def payload = buildPayload()
+                    echo "Final Payload:\n${prettyPrintJson(payload)}"
+
                     if (!params.DRY_RUN) {
-                        executeAPICall()
+                        executeAPICall(payload)
                     } else {
                         echo "\n--- DRY RUN: API Call would be executed with the payload above ---"
                     }
+
+                    archiveAuditLog(payload)
                 }
             }
         }
     }
-    
+
     post {
         success {
-            script {
-                echo "✅ OPERATION COMPLETED SUCCESSFULLY"
-            }
+            echo "✅ OPERATION COMPLETED SUCCESSFULLY"
         }
         failure {
-            script {
-                echo "❌ OPERATION FAILED"
-            }
-        }
-        always {
-            script {
-                archiveAuditLog()
-            }
+            echo "❌ OPERATION FAILED"
         }
     }
 }
@@ -202,7 +134,6 @@ def buildPayload() {
         ]
     ]
 
-    // Build payload based on the selected purpose
     switch (params.PURPOSE) {
         case 'Onboard a new retailer or account':
         case 'Enable a new feature for an existing instance':
@@ -261,8 +192,7 @@ def buildPayload() {
     return payload
 }
 
-def executeAPICall() {
-    def operation
+def executeAPICall(payload) {
     def onboardPurposes = [
         'Onboard a new retailer or account',
         'Enable a new feature for an existing instance',
@@ -275,6 +205,7 @@ def executeAPICall() {
         'Whitelabel a blacklisted feature'
     ]
 
+    def operation
     if (params.PURPOSE in onboardPurposes) {
         operation = 'onboardInstance'
     } else if (params.PURPOSE in activatePurposes) {
@@ -283,16 +214,17 @@ def executeAPICall() {
         error("Internal error: Cannot determine operation for purpose '${params.PURPOSE}'")
     }
 
-    def endpoint = (operation == 'onboardInstance') ? '/common-auth/api/v1/instance/onboard' : '/common-auth/api/v1/instance/activate-deactivate'
-    env.API_ENDPOINT = "${env.API_BASE_URL}${endpoint}"
+    def endpoint = (operation == 'onboardInstance')
+        ? '/common-auth/api/v1/instance/onboard'
+        : '/common-auth/api/v1/instance/activate-deactivate'
 
-    echo "🚀 Executing API call to ${env.API_ENDPOINT}..."
+    def fullUrl = "${env.API_BASE_URL}${endpoint}"
+
+    echo "🚀 Executing API call to ${fullUrl}..."
 
     def maxRetries = env.RETRY_COUNT.toInteger()
     def retryCount = 0
     def lastError = null
-    
-    def apiKeyString = params.X_API_KEY.toString()
 
     while (retryCount < maxRetries) {
         if (retryCount > 0) {
@@ -301,25 +233,25 @@ def executeAPICall() {
         }
 
         def response = httpRequest(
-            url: env.API_ENDPOINT,
+            url: fullUrl,
             httpMode: 'POST',
             contentType: 'APPLICATION_JSON',
-            requestBody: groovy.json.JsonOutput.toJson(env.API_PAYLOAD),
+            requestBody: JsonOutput.toJson(payload),
             customHeaders: [
-                [name: 'X-API-Key', value: apiKeyString],
+                [name: 'X-API-Key', value: params.X_API_KEY.toString()],
                 [name: 'Content-Type', value: 'application/json']
             ],
             timeout: env.TIMEOUT_SECONDS.toInteger(),
-            validResponseCodes: '100:599', // Accept all codes to handle manually
+            validResponseCodes: '100:599',
             ignoreSslErrors: true
         )
 
+        env.API_STATUS = response.status.toString()
         env.API_RESPONSE = response.content
-        env.API_STATUS = response.status
 
         if (response.status >= 200 && response.status < 300) {
-            echo "✅ Response Status: ${env.API_STATUS}"
-            echo "📄 Raw Response: ${env.API_RESPONSE}"
+            echo "✅ Response Status: ${response.status}"
+            echo "📄 Raw Response: ${response.content}"
             return
         } else {
             lastError = "Status: ${response.status}, Body: ${response.content}"
@@ -327,34 +259,34 @@ def executeAPICall() {
             retryCount++
         }
     }
-    
+
     error("❌ All ${maxRetries} attempts failed. Last error: ${lastError}")
 }
 
 def prettyPrintJson(json) {
     try {
-        def jsonString = (json instanceof String) ? json : groovy.json.JsonOutput.toJson(json)
+        def jsonString = (json instanceof String) ? json : JsonOutput.toJson(json)
         def jsonObj = readJSON text: jsonString
-        return groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(jsonObj))
+        return JsonOutput.prettyPrint(JsonOutput.toJson(jsonObj))
     } catch (Exception e) {
         return json.toString()
     }
 }
 
-def archiveAuditLog() {
+def archiveAuditLog(payload) {
     def auditLog = [
         buildNumber: env.BUILD_NUMBER,
         timestamp: new Date().format("yyyy-MM-dd'T'HH:mm:ss'Z'"),
         user: env.BUILD_USER ?: 'System',
         purpose: params.PURPOSE,
         parameters: params,
+        requestPayload: payload,
         result: currentBuild.result,
         duration: currentBuild.durationString,
-        apiEndpoint: env.API_ENDPOINT,
         apiStatus: env.API_STATUS,
         apiResponse: env.API_RESPONSE
     ]
-    
+
     writeJSON file: "audit-log-${env.BUILD_NUMBER}.json", json: auditLog, pretty: 4
     archiveArtifacts artifacts: "audit-log-${env.BUILD_NUMBER}.json", allowEmptyArchive: true
 }
