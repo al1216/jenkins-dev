@@ -157,7 +157,7 @@ pipeline {
                     }
 
                     env.API_PAYLOAD = buildPayload()
-                    echo "Final Payload:\n${prettyPrintJson(env.API_PAYLOAD)}"
+                    echo "Final Payload:\n${prettyPrintJson(groovy.json.JsonOutput.toJson(env.API_PAYLOAD))}"
                     
                     if (!params.DRY_RUN) {
                         executeAPICall()
