@@ -61,7 +61,7 @@ pipeline {
             description: 'Product Line (required for onboarding/feature changes).'
         )
         string(name: 'features', defaultValue: '', description: 'Comma-separated list of features (for onboarding/enabling/blacklisting multiple).')
-        string(name: 'feature', defaultValue: '', description: 'Single feature name (for white labeling/disable module a single feature).')
+        string(name: 'feature', defaultValue: '', description: 'Single feature name (for whitelabeling/disable module a single feature).')
         choice(
             name: 'enableDisableEntity',
             choices: ['', 'CLIENT', 'FEATURE', 'INSTANCE', 'REGION', 'RETAILER'],
