@@ -5,18 +5,6 @@
 pipeline {
     agent any
 
-    parameters {
-        // This parameter is a workaround to render HTML descriptions at the top.
-        string(
-            name: 'JOB_INSTRUCTIONS',
-            defaultValue: '',
-            description: '''<hr><b>HOW TO USE THIS JOB:</b><br><br>
-                1. Select an <b>Operation</b>.<br>
-                2. Select a <b>Purpose</b> for that operation.<br>
-                3. The required input fields will appear below.<br><hr>'''
-        )
-    }
-
     properties([
         parameters([
             password(
@@ -84,7 +72,7 @@ pipeline {
                             if (PURPOSE in neededFor) {
                                 return '<input type="text" name="value" class="setting-input" value="">'
                             }
-                            return ''''''
+                            return ''
                         '''
                     ]
                 ]
@@ -104,7 +92,7 @@ pipeline {
                             if (PURPOSE != null && PURPOSE != 'Select an Operation first') {
                                 return '<input type="text" name="value" class="setting-input" value="">'
                             }
-                            return ''''''
+                            return ''
                         '''
                     ]
                 ]
@@ -131,7 +119,7 @@ pipeline {
                             if (PURPOSE in neededFor) {
                                 return '<input type="text" name="value" class="setting-input" value="">'
                             }
-                            return ''''''
+                            return ''
                         '''
                     ]
                 ]
@@ -158,7 +146,7 @@ pipeline {
                             if (PURPOSE in neededFor) {
                                 return '<input type="text" name="value" class="setting-input" value="">'
                             }
-                            return ''''''
+                            return ''
                         '''
                     ]
                 ]
@@ -185,7 +173,7 @@ pipeline {
                             if (PURPOSE in neededFor) {
                                 return '<input type="text" name="value" class="setting-input" value="">'
                             }
-                            return ''''''
+                            return ''
                         '''
                     ]
                 ]
@@ -211,7 +199,7 @@ pipeline {
                             if (PURPOSE in neededFor) {
                                 return '<select name="value"><option value=""></option><option value="RMM">RMM</option><option value="ESM">ESM</option></select>'
                             }
-                            return ''''''
+                            return ''
                         '''
                     ]
                 ]
@@ -236,7 +224,7 @@ pipeline {
                             if (PURPOSE in neededFor) {
                                 return '<input type="text" name="value" class="setting-input" value="">'
                             }
-                            return ''''''
+                            return ''
                         '''
                     ]
                 ]
@@ -255,7 +243,7 @@ pipeline {
                             if (PURPOSE == 'Whitelabel a blacklisted feature') {
                                 return '<input type="text" name="value" class="setting-input" value="">'
                             }
-                            return ''''''
+                            return ''
                         '''
                     ]
                 ]
@@ -279,7 +267,7 @@ pipeline {
                             if (PURPOSE in neededFor) {
                                 return '<input type="text" name="value" class="setting-input" value="">'
                             }
-                            return ''''''
+                            return ''
                         '''
                     ]
                 ]
@@ -303,7 +291,7 @@ pipeline {
                             if (PURPOSE in neededFor) {
                                 return '<select name="value"><option value="true">true</option><option value="false">false</option></select>'
                             }
-                            return ''''''
+                            return ''
                         '''
                     ]
                 ]
