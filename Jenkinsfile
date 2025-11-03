@@ -28,12 +28,12 @@ pipeline {
         string(
             name: 'clientId',
             defaultValue: '',
-            description: '<b>(Required for most operations)</b> The Client ID.'
+            description: '(Required for most operations)</b> The Client ID.'
         )
         string(
             name: 'instanceName',
             defaultValue: '',
-            description: '<b>(Required for all operations)</b> The Instance Name.'
+            description: '(Required for all operations)</b> The Instance Name.'
         )
         choice(
             name: 'retailer',
@@ -63,7 +63,7 @@ pipeline {
                 'walmart',
                 'wayfair'
             ],
-            description: '<b>(Required for Onboarding, De-onboarding, etc.)</b> Select the retailer.'
+            description: '(Required for Onboarding, De-onboarding, etc.)</b> Select the retailer.'
         )
         choice(
             name: 'retailerVariant',
@@ -84,7 +84,7 @@ pipeline {
                 'retailer',
                 'rms'
             ],
-            description: '<b>(Required for Onboarding, De-onboarding, etc.)</b> Select the retailer variant.'
+            description: '(Required for Onboarding, De-onboarding, etc.)</b> Select the retailer variant.'
         )
         choice(
             name: 'region',
@@ -97,22 +97,22 @@ pipeline {
                 'UK',
                 'US'
             ],
-            description: '<b>(Required for Onboarding, Region Enablement, etc.)</b> Select the region.'
+            description: '(Required for Onboarding, Region Enablement, etc.)</b> Select the region.'
         )
         choice(
             name: 'productLine',
             choices: ['', 'RMM', 'ESM'],
-            description: '<b>(Required for Onboarding, Feature changes, etc.)</b> The Product Line.'
+            description: '(Required for Onboarding, Feature changes, etc.)</b> The Product Line.'
         )
         string(
             name: 'features',
             defaultValue: '',
-            description: '<b>(For Onboarding/Enabling multiple features)</b> Comma-separated list of features.'
+            description: '(For Onboarding/Enabling multiple features)</b> Comma-separated list of features.'
         )
         string(
             name: 'feature',
             defaultValue: '',
-            description: '<b>(For Whitelabeling a single feature)</b> The single feature name.'
+            description: '(For Whitelabeling a single feature)</b> The single feature name.'
         )
         choice(
             name: 'enableDisableEntity',
@@ -124,12 +124,12 @@ pipeline {
                 'REGION',
                 'RETAILER'
             ],
-            description: '<b>(For Activation/Deactivation)</b> Select the entity to act upon.'
+            description: '(For Activation/Deactivation)</b> Select the entity to act upon.'
         )
         choice(
             name: 'activate',
             choices: ['true', 'false'],
-            description: '<b>(For Activation/Deactivation)</b> Set to true or false.'
+            description: '(For Activation/Deactivation)</b> Set to true or false.'
         )
         booleanParam(
             name: 'DRY_RUN',
@@ -281,7 +281,7 @@ def executeAPICall() {
         error("Internal error: Cannot determine operation for purpose '${params.PURPOSE}'")
     }
 
-    def endpoint = (operation == 'onboardInstance') ? '/common-auth/api/v1/instance/onboard' : '/common-auth/api/v1/instance/activate'
+    def endpoint = (operation == 'onboardInstance') ? '/common-auth/api/v1/instance/onboard' : '/common-auth/api/v1/instance/activate-deactivate'
     env.API_ENDPOINT = "${env.API_BASE_URL}${endpoint}"
 
     echo "🚀 Executing API call to ${env.API_ENDPOINT}..."
