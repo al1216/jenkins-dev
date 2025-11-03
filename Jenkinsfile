@@ -1,86 +1,288 @@
 #!/usr/bin/env groovy
 
-// This pipeline uses standard parameters and intelligent payload creation.
+// This pipeline uses the Active Choices plugin to create a dynamic UI.
 
-pipeline {
-    agent any
-
-    parameters {
+// Define all job properties, including dynamic parameters, outside the pipeline block.
+properties([
+    parameters([
         password(
             name: 'X_API_KEY',
             defaultValue: '',
             description: '🔑 Your X-API-Key (required for authentication).'
-        )
+        ),
         choice(
+            name: 'OPERATION',
+            choices: ['onboardInstance', 'activateInstance'],
+            description: '🎯 Select the top-level operation.'
+        ),
+        // Dynamic "Purpose" dropdown
+        [
+            $class: 'org.biouno.unochoice.CascadeChoiceParameter',
             name: 'PURPOSE',
-            choices: [
-                '',
-                'Onboard a new retailer or account',
-                'Enable a new feature for an existing instance',
-                'Blacklist a feature for an existing instance',
-                'Activate an onboarded instance',
-                'De-onboard a retailer',
-                'Enable a new region for an existing instance',
-                'Whitelabel a blacklisted feature'
-            ],
-            description: '🎯 Select the specific goal for your operation. The required fields will be used based on this choice.'
-        )
-        string(
+            description: 'Select the specific goal for your operation.',
+            referencedParameters: 'OPERATION',
+            choiceType: 'PT_SINGLE_SELECT',
+            script: [
+                $class: 'GroovyScript',
+                script: [
+                    classpath: [],
+                    sandbox: true,
+                    script: '''
+                        if (OPERATION == 'onboardInstance') {
+                            return [
+                                'Onboard a new retailer or account',
+                                'Enable a new feature for an existing instance',
+                                'Blacklist a feature for an existing instance'
+                            ]
+                        } else if (OPERATION == 'activateInstance') {
+                            return [
+                                'Activate an onboarded instance',
+                                'De-onboard a retailer',
+                                'Enable a new region for an existing instance',
+                                'Whitelabel a blacklisted feature'
+                            ]
+                        } else {
+                            return ['Select an Operation first']
+                        }
+                    '''
+                ]
+            ]
+        ],
+        // --- Conditionally Enabled/Disabled Parameters ---
+        [
+            $class: 'org.biouno.unochoice.DynamicParameter',
             name: 'clientId',
-            defaultValue: '',
-            description: '<b>(Required for most operations)</b> The Client ID.'
-        )
-        string(
+            description: 'Client ID',
+            choiceType: 'ET_FORMATTED_HTML',
+            script: [
+                $class: 'GroovyScript',
+                script: [
+                    classpath: [],
+                    sandbox: true,
+                    script: '''
+                        def neededFor = [
+                            'Onboard a new retailer or account',
+                            'Enable a new feature for an existing instance',
+                            'Blacklist a feature for an existing instance',
+                            'Enable a new region for an existing instance',
+                            'Whitelabel a blacklisted feature'
+                        ]
+                        def disabled = (PURPOSE in neededFor) ? '' : 'disabled'
+                        return "<input type=\"text\" name=\"value\" class=\"setting-input\" ${disabled}>"
+                    '''
+                ]
+            ]
+        ],
+        [
+            $class: 'org.biouno.unochoice.DynamicParameter',
             name: 'instanceName',
-            defaultValue: '',
-            description: '<b>(Required for all operations)</b> The Instance Name.'
-        )
-        string(
+            description: 'Instance Name',
+            choiceType: 'ET_FORMATTED_HTML',
+            script: [
+                $class: 'GroovyScript',
+                script: [
+                    classpath: [],
+                    sandbox: true,
+                    script: '''
+                        def disabled = (PURPOSE != null && PURPOSE != 'Select an Operation first') ? '' : 'disabled'
+                        return "<input type=\"text\" name=\"value\" class=\"setting-input\" ${disabled}>"
+                    '''
+                ]
+            ]
+        ],
+        [
+            $class: 'org.biouno.unochoice.DynamicParameter',
             name: 'retailer',
-            defaultValue: '',
-            description: '<b>(Required for Onboarding, De-onboarding, etc.)</b> The retailer.'
-        )
-        string(
+            description: 'Retailer',
+            choiceType: 'ET_FORMATTED_HTML',
+            script: [
+                $class: 'GroovyScript',
+                script: [
+                    classpath: [],
+                    sandbox: true,
+                    script: '''
+                        def neededFor = [
+                            'Onboard a new retailer or account',
+                            'Enable a new feature for an existing instance',
+                            'Blacklist a feature for an existing instance',
+                            'De-onboard a retailer',
+                            'Enable a new region for an existing instance',
+                            'Whitelabel a blacklisted feature'
+                        ]
+                        def disabled = (PURPOSE in neededFor) ? '' : 'disabled'
+                        return "<input type=\"text\" name=\"value\" class=\"setting-input\" ${disabled}>"
+                    '''
+                ]
+            ]
+        ],
+        [
+            $class: 'org.biouno.unochoice.DynamicParameter',
             name: 'retailerVariant',
-            defaultValue: '',
-            description: '<b>(Required for Onboarding, De-onboarding, etc.)</b> The retailer variant.'
-        )
-        string(
+            description: 'Retailer Variant',
+            choiceType: 'ET_FORMATTED_HTML',
+            script: [
+                $class: 'GroovyScript',
+                script: [
+                    classpath: [],
+                    sandbox: true,
+                    script: '''
+                        def neededFor = [
+                            'Onboard a new retailer or account',
+                            'Enable a new feature for an existing instance',
+                            'Blacklist a feature for an existing instance',
+                            'De-onboard a retailer',
+                            'Enable a new region for an existing instance',
+                            'Whitelabel a blacklisted feature'
+                        ]
+                        def disabled = (PURPOSE in neededFor) ? '' : 'disabled'
+                        return "<input type=\"text\" name=\"value\" class=\"setting-input\" ${disabled}>"
+                    '''
+                ]
+            ]
+        ],
+        [
+            $class: 'org.biouno.unochoice.DynamicParameter',
             name: 'region',
-            defaultValue: '',
-            description: '<b>(Required for Onboarding, Region Enablement, etc.)</b> The region.'
-        )
-        choice(
+            description: 'Region',
+            choiceType: 'ET_FORMATTED_HTML',
+            script: [
+                $class: 'GroovyScript',
+                script: [
+                    classpath: [],
+                    sandbox: true,
+                    script: '''
+                        def neededFor = [
+                            'Onboard a new retailer or account',
+                            'Enable a new feature for an existing instance',
+                            'Blacklist a feature for an existing instance',
+                            'De-onboard a retailer',
+                            'Enable a new region for an existing instance',
+                            'Whitelabel a blacklisted feature'
+                        ]
+                        def disabled = (PURPOSE in neededFor) ? '' : 'disabled'
+                        return "<input type=\"text\" name=\"value\" class=\"setting-input\" ${disabled}>"
+                    '''
+                ]
+            ]
+        ],
+        [
+            $class: 'org.biouno.unochoice.DynamicParameter',
             name: 'productLine',
-            choices: ['', 'RMM', 'ESM'],
-            description: '<b>(Required for Onboarding, Feature changes, etc.)</b> The Product Line.'
-        )
-        string(
+            description: 'Product Line',
+            choiceType: 'ET_FORMATTED_HTML',
+            script: [
+                $class: 'GroovyScript',
+                script: [
+                    classpath: [],
+                    sandbox: true,
+                    script: '''
+                        def neededFor = [
+                            'Onboard a new retailer or account',
+                            'Enable a new feature for an existing instance',
+                            'Blacklist a feature for an existing instance',
+                            'Enable a new region for an existing instance',
+                            'Whitelabel a blacklisted feature'
+                        ]
+                        def disabled = (PURPOSE in neededFor) ? '' : 'disabled'
+                        return "<select name=\"value\" ${disabled}><option value=\"\"></option><option value=\"RMM\">RMM</option><option value=\"ESM\">ESM</option></select>"
+                    '''
+                ]
+            ]
+        ],
+        [
+            $class: 'org.biouno.unochoice.DynamicParameter',
             name: 'features',
-            defaultValue: '',
-            description: '<b>(For Onboarding/Enabling multiple features)</b> Comma-separated list of features.'
-        )
-        string(
+            description: 'Features (comma-separated)',
+            choiceType: 'ET_FORMATTED_HTML',
+            script: [
+                $class: 'GroovyScript',
+                script: [
+                    classpath: [],
+                    sandbox: true,
+                    script: '''
+                        def neededFor = [
+                            'Onboard a new retailer or account',
+                            'Enable a new feature for an existing instance',
+                            'Blacklist a feature for an existing instance',
+                            'Enable a new region for an existing instance'
+                        ]
+                        def disabled = (PURPOSE in neededFor) ? '' : 'disabled'
+                        return "<input type=\"text\" name=\"value\" class=\"setting-input\" ${disabled}>"
+                    '''
+                ]
+            ]
+        ],
+        [
+            $class: 'org.biouno.unochoice.DynamicParameter',
             name: 'feature',
-            defaultValue: '',
-            description: '<b>(For Whitelabeling a single feature)</b> The single feature name.'
-        )
-        string(
+            description: 'Feature (single)',
+            choiceType: 'ET_FORMATTED_HTML',
+            script: [
+                $class: 'GroovyScript',
+                script: [
+                    classpath: [],
+                    sandbox: true,
+                    script: '''
+                        def disabled = (PURPOSE == 'Whitelabel a blacklisted feature') ? '' : 'disabled'
+                        return "<input type=\"text\" name=\"value\" class=\"setting-input\" ${disabled}>"
+                    '''
+                ]
+            ]
+        ],
+        [
+            $class: 'org.biouno.unochoice.DynamicParameter',
             name: 'enableDisableEntity',
-            defaultValue: '',
-            description: '<b>(For Activation/Deactivation)</b> The entity to act upon (e.g., INSTANCE, RETAILER).'
-        )
-        choice(
+            description: 'Entity to Enable/Disable',
+            choiceType: 'ET_FORMATTED_HTML',
+            script: [
+                $class: 'GroovyScript',
+                script: [
+                    classpath: [],
+                    sandbox: true,
+                    script: '''
+                        def neededFor = [
+                            'Activate an onboarded instance',
+                            'De-onboard a retailer',
+                            'Whitelabel a blacklisted feature'
+                        ]
+                        def disabled = (PURPOSE in neededFor) ? '' : 'disabled'
+                        return "<input type=\"text\" name=\"value\" class=\"setting-input\" ${disabled}>"
+                    '''
+                ]
+            ]
+        ],
+        [
+            $class: 'org.biouno.unochoice.DynamicParameter',
             name: 'activate',
-            choices: ['true', 'false'],
-            description: '<b>(For Activation/Deactivation)</b> Set to true or false.'
-        )
+            description: 'Activate?',
+            choiceType: 'ET_FORMATTED_HTML',
+            script: [
+                $class: 'GroovyScript',
+                script: [
+                    classpath: [],
+                    sandbox: true,
+                    script: '''
+                        def neededFor = [
+                            'Activate an onboarded instance',
+                            'De-onboard a retailer',
+                            'Whitelabel a blacklisted feature'
+                        ]
+                        def disabled = (PURPOSE in neededFor) ? '' : 'disabled'
+                        return "<select name=\"value\" ${disabled}><option value=\"true\">true</option><option value=\"false\">false</option></select>"
+                    '''
+                ]
+            ]
+        ],
         booleanParam(
             name: 'DRY_RUN',
             defaultValue: false,
             description: '🔍 Dry run mode (preview without executing)'
         )
-    }
+    ])
+])
+
+pipeline {
+    agent any
 
     environment {
         API_BASE_URL = 'http://client-setup-platform.beta-dbx.commerceiq.ai'
@@ -92,12 +294,7 @@ pipeline {
         stage('🔨 Build and Execute') {
             steps {
                 script {
-                    echo "--- Starting Operation for Purpose: ${params.PURPOSE} ---"
-                    
-                    if (params.PURPOSE.isEmpty()) {
-                        error('You must select a Purpose for the operation.')
-                    }
-
+                    echo "--- Starting Operation ---"
                     env.API_PAYLOAD = buildPayload()
                     echo "Final Payload:\n${prettyPrintJson(env.API_PAYLOAD)}"
                     
@@ -144,60 +341,31 @@ def buildPayload() {
         ]
     ]
 
-    // Build payload based on the selected purpose
-    switch (params.PURPOSE) {
-        case 'Onboard a new retailer or account':
-        case 'Enable a new feature for an existing instance':
-        case 'Blacklist a feature for an existing instance':
-            payload.clientId = params.clientId
-            payload.instanceName = params.instanceName
-            payload.retailer = params.retailer
-            payload.retailerVariant = params.retailerVariant
-            payload.region = params.region
-            payload.productLine = params.productLine
-            if (params.features) {
-                payload.features = params.features.split(',').collect { it.trim() }
-            }
-            break
+    // Conditionally add parameters to the payload if they exist and are not empty
+    if (params.clientId) payload.clientId = params.clientId
+    if (params.instanceName) payload.instanceName = params.instanceName
+    if (params.retailer) payload.retailer = params.retailer
+    if (params.retailerVariant) payload.retailerVariant = params.retailerVariant
+    if (params.region) payload.region = params.region
+    if (params.productLine) payload.productLine = params.productLine
+    if (params.activate) payload.activate = params.activate.toBoolean()
+    if (params.enableDisableEntity) payload.enableDisableEntity = params.enableDisableEntity
+    
+    // Handle features and feature
+    def featuresList = []
+    if (params.features) {
+        featuresList.addAll(params.features.split(',').collect { it.trim() })
+    }
+    if (params.feature) {
+        if (PURPOSE == 'Whitelabel a blacklisted feature') {
+             payload.feature = params.feature.trim()
+        } else {
+             featuresList.add(params.feature.trim())
+        }
+    }
 
-        case 'Activate an onboarded instance':
-            payload.instanceName = params.instanceName
-            payload.enableDisableEntity = params.enableDisableEntity
-            payload.activate = params.activate.toBoolean()
-            break
-
-        case 'De-onboard a retailer':
-            payload.instanceName = params.instanceName
-            payload.enableDisableEntity = params.enableDisableEntity
-            payload.region = params.region
-            payload.retailer = params.retailer
-            payload.retailerVariant = params.retailerVariant
-            payload.activate = params.activate.toBoolean()
-            break
-
-        case 'Enable a new region for an existing instance':
-            payload.clientId = params.clientId
-            payload.instanceName = params.instanceName
-            payload.retailer = params.retailer
-            payload.retailerVariant = params.retailerVariant
-            payload.region = params.region
-            payload.productLine = params.productLine
-            if (params.features) {
-                payload.features = params.features.split(',').collect { it.trim() }
-            }
-            break
-
-        case 'Whitelabel a blacklisted feature':
-            payload.instanceName = params.instanceName
-            payload.enableDisableEntity = params.enableDisableEntity
-            payload.region = params.region
-            payload.retailer = params.retailer
-            payload.retailerVariant = params.retailerVariant
-            payload.activate = params.activate.toBoolean()
-            payload.clientId = params.clientId
-            payload.productLine = params.productLine
-            payload.feature = params.feature
-            break
+    if (featuresList) {
+        payload.features = featuresList
     }
 
     return payload
@@ -232,7 +400,7 @@ def executeAPICall() {
                 [name: 'Content-Type', value: 'application/json']
             ],
             timeout: env.TIMEOUT_SECONDS.toInteger(),
-            validResponseCodes: '100:599' // Accept all codes to handle manually
+            validResponseCodes: '100:599'
         )
 
         env.API_RESPONSE = response.content
