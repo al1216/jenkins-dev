@@ -17,7 +17,7 @@ properties([
         ),
         // Dynamic "Purpose" dropdown
         [
-            $class: 'CascadeChoiceParameter',
+            $class: 'org.biouno.unochoice.CascadeChoiceParameter',
             name: 'PURPOSE',
             description: 'Select the specific goal for your operation.',
             referencedParameters: 'OPERATION',
@@ -50,7 +50,7 @@ properties([
         ],
         // --- Conditionally Visible Parameters ---
         [
-            $class: 'DynamicParameter',
+            $class: 'org.biouno.unochoice.DynamicParameter',
             name: 'clientId',
             description: 'Client ID',
             choiceType: 'ET_FORMATTED_HTML',
@@ -76,7 +76,7 @@ properties([
             ]
         ],
         [
-            $class: 'DynamicParameter',
+            $class: 'org.biouno.unochoice.DynamicParameter',
             name: 'instanceName',
             description: 'Instance Name',
             choiceType: 'ET_FORMATTED_HTML',
@@ -96,7 +96,7 @@ properties([
             ]
         ],
         [
-            $class: 'DynamicParameter',
+            $class: 'org.biouno.unochoice.DynamicParameter',
             name: 'retailer',
             description: 'Retailer',
             choiceType: 'ET_FORMATTED_HTML',
@@ -123,7 +123,7 @@ properties([
             ]
         ],
         [
-            $class: 'DynamicParameter',
+            $class: 'org.biouno.unochoice.DynamicParameter',
             name: 'retailerVariant',
             description: 'Retailer Variant',
             choiceType: 'ET_FORMATTED_HTML',
@@ -150,7 +150,7 @@ properties([
             ]
         ],
         [
-            $class: 'DynamicParameter',
+            $class: 'org.biouno.unochoice.DynamicParameter',
             name: 'region',
             description: 'Region',
             choiceType: 'ET_FORMATTED_HTML',
@@ -177,7 +177,7 @@ properties([
             ]
         ],
         [
-            $class: 'DynamicParameter',
+            $class: 'org.biouno.unochoice.DynamicParameter',
             name: 'productLine',
             description: 'Product Line',
             choiceType: 'ET_FORMATTED_HTML',
@@ -203,7 +203,7 @@ properties([
             ]
         ],
         [
-            $class: 'DynamicParameter',
+            $class: 'org.biouno.unochoice.DynamicParameter',
             name: 'features',
             description: 'Features (comma-separated)',
             choiceType: 'ET_FORMATTED_HTML',
@@ -228,7 +228,7 @@ properties([
             ]
         ],
         [
-            $class: 'DynamicParameter',
+            $class: 'org.biouno.unochoice.DynamicParameter',
             name: 'feature',
             description: 'Feature (single)',
             choiceType: 'ET_FORMATTED_HTML',
@@ -247,7 +247,7 @@ properties([
             ]
         ],
         [
-            $class: 'DynamicParameter',
+            $class: 'org.biouno.unochoice.DynamicParameter',
             name: 'enableDisableEntity',
             description: 'Entity to Enable/Disable',
             choiceType: 'ET_FORMATTED_HTML',
@@ -271,7 +271,7 @@ properties([
             ]
         ],
         [
-            $class: 'DynamicParameter',
+            $class: 'org.biouno.unochoice.DynamicParameter',
             name: 'activate',
             description: 'Activate?',
             choiceType: 'ET_FORMATTED_HTML',
