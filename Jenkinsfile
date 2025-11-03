@@ -104,9 +104,15 @@ pipeline {
         )
         
         string(
+            name: 'FEATURE',
+            defaultValue: '',
+            description: '✨ Single feature to enable (e.g., rmm_base)'
+        )
+
+        string(
             name: 'FEATURES',
             defaultValue: '',
-            description: '✨ Features to enable (comma-separated list, e.g., rmm_base,rmm_dsp)'
+            description: '✨ Multiple features to enable (comma-separated list, e.g., rmm_base,rmm_dsp)'
         )
         
         choice(
@@ -159,6 +165,7 @@ pipeline {
 ║  Retailer         : ${params.RETAILER ?: 'N/A'}                        ║
 ║  Retailer Variant : ${params.RETAILER_VARIANT ?: 'N/A'}               ║
 ║  Product Line     : ${params.PRODUCT_LINE ?: 'N/A'}                  ║
+║  Feature          : ${params.FEATURE ?: 'N/A'}                       ║
 ║  Features         : ${params.FEATURES ?: 'N/A'}                      ║
 ║  Activate         : ${params.ACTIVATE ?: 'N/A'}                        ║
 ║  Entity           : ${params.ENABLE_DISABLE_ENTITY ?: 'N/A'}           ║
@@ -360,6 +367,9 @@ def buildPayload() {
     }
     if (params.PRODUCT_LINE) {
         payload.productLine = params.PRODUCT_LINE
+    }
+    if (params.FEATURE) {
+        payload.feature = params.FEATURE.trim()
     }
     if (params.FEATURES) {
         payload.features = params.FEATURES.split(',').collect { it.trim() }
