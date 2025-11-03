@@ -1,5 +1,7 @@
 #!/usr/bin/env groovy
 
+import groovy.json.JsonOutput
+
 // This pipeline uses standard parameters and intelligent payload creation.
 
 pipeline {
@@ -302,7 +304,7 @@ def executeAPICall() {
             url: env.API_ENDPOINT,
             httpMode: 'POST',
             contentType: 'APPLICATION_JSON',
-            requestBody: env.API_PAYLOAD,
+            requestBody: groovy.json.JsonOutput.toJson(env.API_PAYLOAD),
             customHeaders: [
                 [name: 'X-API-Key', value: apiKeyString],
                 [name: 'Content-Type', value: 'application/json']
