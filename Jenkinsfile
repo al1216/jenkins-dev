@@ -52,7 +52,7 @@ pipeline {
         )
         choice(
             name: 'region',
-            choices: ['', 'FR', 'GB', 'IE', 'IT', 'MX', 'UK', 'US'],
+            choices: ['', 'CA', 'FR', 'GB', 'IE', 'IT', 'MX', 'UK', 'US'],
             description: 'Select the region (for onboarding, region enablement, etc.).'
         )
         choice(
