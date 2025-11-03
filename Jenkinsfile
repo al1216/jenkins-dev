@@ -35,20 +35,69 @@ pipeline {
             defaultValue: '',
             description: '<b>(Required for all operations)</b> The Instance Name.'
         )
-        string(
+        choice(
             name: 'retailer',
-            defaultValue: '',
-            description: '<b>(Required for Onboarding, De-onboarding, etc.)</b> The retailer.'
+            choices: [
+                '',
+                'ahold',
+                'albertsons',
+                'amazon',
+                'bestbuy',
+                'chewy',
+                'costco',
+                'cvs',
+                'fresh',
+                'gopuff',
+                'hyvee',
+                'instacart',
+                'kroger',
+                'meijer',
+                'omni',
+                'overstock',
+                'samsclub',
+                'shipt',
+                'shoprite',
+                'target',
+                'ubereats',
+                'walgreen',
+                'walmart',
+                'wayfair'
+            ],
+            description: '<b>(Required for Onboarding, De-onboarding, etc.)</b> Select the retailer.'
         )
-        string(
+        choice(
             name: 'retailerVariant',
-            defaultValue: '',
-            description: '<b>(Required for Onboarding, De-onboarding, etc.)</b> The retailer variant.'
+            choices: [
+                '',
+                '3P',
+                'api',
+                'business',
+                'citrus',
+                'criteo',
+                'direct',
+                'fresh',
+                'hybrid',
+                'kevel',
+                'native',
+                'promoteiq',
+                'retail',
+                'retailer',
+                'rms'
+            ],
+            description: '<b>(Required for Onboarding, De-onboarding, etc.)</b> Select the retailer variant.'
         )
-        string(
+        choice(
             name: 'region',
-            defaultValue: '',
-            description: '<b>(Required for Onboarding, Region Enablement, etc.)</b> The region.'
+            choices: [
+                '',
+                'FR',
+                'IE',
+                'IT',
+                'MX',
+                'UK',
+                'US'
+            ],
+            description: '<b>(Required for Onboarding, Region Enablement, etc.)</b> Select the region.'
         )
         choice(
             name: 'productLine',
@@ -65,10 +114,17 @@ pipeline {
             defaultValue: '',
             description: '<b>(For Whitelabeling a single feature)</b> The single feature name.'
         )
-        string(
+        choice(
             name: 'enableDisableEntity',
-            defaultValue: '',
-            description: '<b>(For Activation/Deactivation)</b> The entity to act upon (e.g., INSTANCE, RETAILER).'
+            choices: [
+                '',
+                'CLIENT',
+                'FEATURE',
+                'INSTANCE',
+                'REGION',
+                'RETAILER'
+            ],
+            description: '<b>(For Activation/Deactivation)</b> Select the entity to act upon.'
         )
         choice(
             name: 'activate',
