@@ -298,12 +298,25 @@ def prettyPrintJson(json) {
 }
 
 def archiveAuditLog(payload) {
+    // Create a mutable copy of params to redact sensitive information
+    def paramsForLog = new HashMap(params)
+    if (paramsForLog.containsKey('X_API_KEY') && paramsForLog.X_API_KEY instanceof org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl) {
+        // Redact the plainText value of the X_API_KEY
+        paramsForLog.X_API_KEY = [
+            encryptedValue: paramsForLog.X_API_KEY.encryptedValue,
+            plainText: '********'
+        ]
+    } else if (paramsForLog.containsKey('X_API_KEY')) {
+        // Fallback for other types of password parameters if any, or if it's just a string
+        paramsForLog.X_API_KEY = '********'
+    }
+
     def auditLog = [
         buildNumber: env.BUILD_NUMBER,
         timestamp: new Date().format("yyyy-MM-dd'T'HH:mm:ss'Z'"),
         user: env.BUILD_USER ?: 'System',
         purpose: params.PURPOSE,
-        parameters: params,
+        parameters: paramsForLog, // Use the redacted parameters for logging
         requestPayload: payload,
         result: currentBuild.result,
         duration: currentBuild.durationString,
