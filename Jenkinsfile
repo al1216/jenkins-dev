@@ -246,45 +246,45 @@ def executeAPICall(payload, apiBaseUrl) {
 
     echo "🚀 Executing API call to ${fullUrl}..."
 
+    // Convert payload to JSON string
+    def payloadJson = JsonOutput.toJson(payload)
+
+    // Escape payload for shell argument
+    def escapedPayload = payloadJson.replace('\\', '\\\\').replace('"', '\\"').replace('$', '\\$')
+
+    // Call Python script to make the API request
+    def pythonScript = "${env.WORKSPACE}/jenkins_scripts/api_caller.py"
     def maxRetries = env.RETRY_COUNT.toInteger()
-    def retryCount = 0
-    def lastError = null
+    def timeout = env.TIMEOUT_SECONDS.toInteger()
 
-    while (retryCount < maxRetries) {
-        if (retryCount > 0) {
-            echo "🔄 Retry attempt ${retryCount + 1} of ${maxRetries}"
-            sleep(time: (retryCount * 5), unit: 'SECONDS')
-        }
+    try {
+        // Execute Python script
+        def result = sh(
+            script: """
+                python3 '${pythonScript}' \\
+                    --url '${fullUrl}' \\
+                    --payload "${escapedPayload}" \\
+                    --api-key '${params.X_API_KEY}' \\
+                    --timeout ${timeout} \\
+                    --max-retries ${maxRetries} \\
+                    --ignore-ssl
+            """,
+            returnStdout: true
+        ).trim()
 
-        def response = httpRequest(
-            url: fullUrl,
-            httpMode: 'POST',
-            contentType: 'APPLICATION_JSON',
-            requestBody: JsonOutput.toJson(payload),
-            customHeaders: [
-                [name: 'X-API-Key', value: params.X_API_KEY.toString()],
-                [name: 'Content-Type', value: 'application/json']
-            ],
-            timeout: env.TIMEOUT_SECONDS.toInteger(),
-            validResponseCodes: '100:599',
-            ignoreSslErrors: true
-        )
+        // Parse the JSON response from Python script
+        def response = readJSON text: result
 
         env.API_STATUS = response.status.toString()
         env.API_RESPONSE = response.content
 
-        if (response.status >= 200 && response.status < 300) {
-            echo "✅ Response Status: ${response.status}"
-            echo "📄 Raw Response: ${response.content}"
-            return
-        } else {
-            lastError = "Status: ${response.status}, Body: ${response.content}"
-            echo "❌ API call failed. ${lastError}"
-            retryCount++
-        }
-    }
+        echo "✅ API call completed successfully"
+        echo "📊 Status: ${response.status}"
+        echo "📄 Response: ${response.content}"
 
-    error("❌ All ${maxRetries} attempts failed. Last error: ${lastError}")
+    } catch (Exception e) {
+        error("❌ API call failed: ${e.message}")
+    }
 }
 
 def prettyPrintJson(json) {
